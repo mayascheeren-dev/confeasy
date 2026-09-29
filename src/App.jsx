@@ -1,22 +1,17 @@
-// ── SENHAS COM VALIDADE ANUAL ────────────────────────
-// Adicione uma linha por venda realizada
-// Formato: { senha, expira: 'AAAA-MM-DD', nome }
+// ── BANCO DE SENHAS ──────────────────────────────────
+// Formato: { senha: 'XXXX', expira: 'AAAA-MM-DD', nome: 'Ana' }
 const SENHAS = [
-  { senha: "confeasy-teste2025", expira: "2026-09-29", nome: "Teste" },
-  // { senha: "confeasy-ana2025", expira: "2026-10-01", nome: "Ana" },
-  // { senha: "confeasy-carol88", expira: "2026-10-15", nome: "Carol" },
+  { senha: 'confeasy-ana2025',     expira: '2026-09-29', nome: 'Ana Silva' },
+  { senha: 'confeasy-carol88',     expira: '2026-10-15', nome: 'Carol M.' },
+  { senha: 'confeasy-julia2025',   expira: '2027-01-10', nome: 'Julia R.' },
+  // ← adicione uma linha por venda
 ];
 
+// Lógica de verificação
 function verificarSenha(pwd) {
-  const hoje = new Date().toISOString().split("T")[0];
-  const found = SENHAS.find((s) => s.senha === pwd);
-  if (!found) return { ok: false, msg: "Senha incorreta." };
-  if (hoje > found.expira)
-    return { ok: false, msg: "Acesso expirado. Renove seu plano 💛" };
-  return { ok: true, nome: found.nome };
+  const hoje = new Date().toISOString().split('T')[0];
+  const encontrada = SENHAS.find(s => s.senha === pwd);
+  if (!encontrada) return { ok: false, msg: 'Senha incorreta.' };
+  if (hoje > encontrada.expira) return { ok: false, msg: 'Acesso expirado. Renove seu plano.' };
+  return { ok: true, nome: encontrada.nome };
 }
-
-// Substitui a linha: if (pwd === PASSWORD) onLogin();
-// Por:
-// const res = verificarSenha(pwd);
-// if (res.ok) onLogin(); else setErr(res.msg);
