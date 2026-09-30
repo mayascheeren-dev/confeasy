@@ -1,3 +1,6 @@
+// CONFEASY — APP.JSX COMPLETO
+// Substituição integral do arquivo src/App.jsx
+
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
