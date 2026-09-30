@@ -205,3 +205,60 @@
     overflow: hidden;
   }
 }
+
+/* =========================================================
+   MOBILE — PEDIDOS: somente cartões, nunca a tabela desktop
+   ========================================================= */
+@media (max-width: 760px) {
+  .orders-page-panel .orders-table-desktop,
+  .orders-page-panel .orders-table-desktop.table-wrap {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .orders-page-panel .orders-mobile-list {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .orders-page-panel .order-mobile-card {
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .orders-page-panel .order-mobile-top strong,
+  .orders-page-panel .order-mobile-top small {
+    display: block !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .orders-page-panel .order-mobile-meta {
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+
+  .orders-page-panel .order-mobile-meta > div {
+    padding: 8px 0 !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .orders-page-panel .order-mobile-meta > div:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .orders-page-panel .order-mobile-meta strong {
+    font-size: 13px !important;
+  }
+
+  .orders-page-panel .order-mobile-actions {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
