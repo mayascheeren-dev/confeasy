@@ -62,58 +62,2028 @@ function Stat({label,value,green}){return <div className="stat"><span>{label}</s
 function MiniCard({icon:Icon,title,value,text,onClick,alert}){return <button className="mini-card" onClick={onClick} style={{minWidth:0,minHeight:112,padding:18,display:'grid',gridTemplateColumns:'42px minmax(0,1fr) 18px',alignItems:'center',gap:14,background:'#111314',border:'1px solid rgba(255,255,255,.08)',borderRadius:16,color:'#fff',textAlign:'left',overflow:'hidden'}}><div className="mini-icon" style={{width:42,height:42,borderRadius:12,display:'grid',placeItems:'center',background:'#202420',color:'var(--lime)',flex:'none'}}><Icon size={20}/></div><div style={{minWidth:0,display:'grid',gap:5}}><span style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{title}</span><b className={alert?'warning-text':''} style={{fontSize:20,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{value}</b><small style={{fontSize:10,color:'var(--muted-2)',lineHeight:1.25}}>{text}</small></div><ChevronRight size={16} style={{color:'var(--muted-2)',justifySelf:'end'}}/></button>}
 function Empty({text,action,onClick}){return <div className="empty"><div>{text}</div>{action&&<button className="secondary small" onClick={onClick}><Plus size={15}/>{action}</button>}</div>}
 
-function Recipes({session,notify}){
- const blank={name:'',category:'Bolos',photo_url:'',yield_amount:'1',yield_unit:'un',portion_size:'',desired_margin:'40',sale_price:'',preparation:'',notes:'',ingredients:[]};
- const[rows,setRows]=useState([]),[open,setOpen]=useState(false),[editing,setEditing]=useState(null),[form,setForm]=useState(blank),[query,setQuery]=useState(''),[category,setCategory]=useState('Todas'),[uploading,setUploading]=useState(false);
- async function load(){const{data,error}=await supabase.from('recipes').select('*, recipe_ingredients(*)').order('created_at',{ascending:false});if(error)notify(error.message);else setRows(data||[])} useEffect(()=>{load()},[]);
- const filtered=rows.filter(r=>(!query||r.name.toLowerCase().includes(query.toLowerCase()))&&(category==='Todas'||r.category===category));
- const calc=useMemo(()=>{const total=(form.ingredients||[]).reduce((s,i)=>s+(Number(i.quantity)||0)*(Number(i.unit_cost)||0),0);const yieldAmount=Math.max(Number(form.yield_amount)||0,0);const unit=yieldAmount?total/yieldAmount:0;const margin=clamp(form.desired_margin,0,99.99);const suggested=margin>=100?0:unit/(1-margin/100);return{total,unit,suggested}},[form.ingredients,form.yield_amount,form.desired_margin]);
- function setF(k,v){setForm(f=>({...f,[k]:v}))}
- function openNew(){setEditing(null);setForm({...blank,ingredients:[{id:uid(),name:'',quantity:'',unit:'g',unit_cost:''}]});setOpen(true)}
- function openEdit(r){setEditing(r);setForm({name:r.name||'',category:r.category||'Outros',photo_url:r.photo_url||'',yield_amount:r.yield_amount||1,yield_unit:r.yield_unit||'un',portion_size:r.portion_size||'',desired_margin:r.desired_margin||40,sale_price:r.sale_price||'',preparation:r.preparation||'',notes:r.notes||'',ingredients:(r.recipe_ingredients||[]).map(i=>({id:i.id,name:i.name,quantity:i.quantity,unit:i.unit,unit_cost:i.unit_cost}))});setOpen(true)}
- async function upload(e){const file=e.target.files?.[0];if(!file)return;if(file.size>5*1024*1024){notify('A foto pode ter no máximo 5 MB.');return}setUploading(true);const ext=file.name.split('.').pop()?.toLowerCase()||'jpg';const path=`${session.user.id}/${uid()}.${ext}`;const{error}=await supabase.storage.from('recipe-images').upload(path,file,{upsert:false,contentType:file.type});if(error)notify(error.message);else{const{data}=supabase.storage.from('recipe-images').getPublicUrl(path);setF('photo_url',data.publicUrl);notify('Foto adicionada.')}setUploading(false)}
- function updateIng(id,key,value){setF('ingredients',(form.ingredients||[]).map(i=>i.id===id?{...i,[key]:value}:i))}
- async function save(e){e.preventDefault();if(!form.name.trim()){notify('Informe o nome da receita.');return}const payload={user_id:session.user.id,name:form.name.trim(),category:form.category,photo_url:form.photo_url||null,yield_amount:Number(form.yield_amount)||1,yield_unit:form.yield_unit,yield_units:`${Number(form.yield_amount)||1} ${form.yield_unit}`,portion_size:form.portion_size||null,cost:calc.total,unit_cost:calc.unit,suggested_price:calc.suggested,sale_price:Number(form.sale_price)||0,desired_margin:clamp(form.desired_margin,0,99.99),preparation:form.preparation||null,notes:form.notes||null};let recipeId=editing?.id;let error;if(editing){({error}=await supabase.from('recipes').update(payload).eq('id',editing.id));await supabase.from('recipe_ingredients').delete().eq('recipe_id',editing.id)}else{const res=await supabase.from('recipes').insert(payload).select('id').single();recipeId=res.data?.id;error=res.error}if(!error&&recipeId){const items=(form.ingredients||[]).filter(i=>i.name.trim()).map(i=>({recipe_id:recipeId,user_id:session.user.id,name:i.name.trim(),quantity:Number(i.quantity)||0,unit:i.unit,unit_cost:Number(i.unit_cost)||0}));if(items.length){const res=await supabase.from('recipe_ingredients').insert(items);error=res.error}}if(error)notify(error.message);else{setOpen(false);notify(editing?'Receita atualizada.':'Receita cadastrada.');load()}}
- async function remove(r){if(!window.confirm(`Excluir a receita “${r.name}”?`))return;const{error}=await supabase.from('recipes').delete().eq('id',r.id);if(error)notify(error.message);else{notify('Receita excluída.');load()}}
- return <>
-  <style>{`
-    .recipe-page-tools{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px!important}
-    .recipe-search-wrap{min-width:0}
-    .recipe-search-wrap .search-box{width:100%}
-    .recipe-actions{display:grid;grid-template-columns:160px auto;align-items:center;gap:10px}
-    .recipe-actions select{height:44px;min-width:0}
-    .recipe-actions .primary{height:44px;white-space:nowrap}
-    @media(max-width:760px){
-      .recipe-page-tools{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin-top:14px!important;margin-bottom:16px!important}
-      .recipe-search-wrap{width:100%}
-      .recipe-search-wrap .search-box{width:100%!important;height:48px!important}
-      .recipe-search-wrap .search-box input{font-size:14px!important}
-      .recipe-actions{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.18fr);gap:8px}
-      .recipe-actions select,.recipe-actions .primary{width:100%!important;height:48px!important;min-height:48px!important;border-radius:13px!important}
-      .recipe-actions select{padding:0 10px!important;background:#111314!important;color:#fff!important;border:1px solid rgba(255,255,255,.10)!important;font-size:13px!important}
-      .recipe-actions .primary{justify-content:center!important;font-size:13px!important;padding:0 10px!important}
-      .recipes-page .panel{margin-top:4px!important;border-radius:18px!important}
-      .recipes-page .empty{min-height:220px!important;padding:28px 18px!important}
-      .recipe-grid{grid-template-columns:1fr!important;gap:12px!important}
+function Recipes({session,notify,profile,setProfile}){
+  const blank={
+    name:'',
+    category:'Bolos',
+    photo_url:'',
+    yield_amount:'1',
+    yield_unit:'un',
+    portion_size:'',
+    prep_time_minutes:'',
+    desired_margin:'40',
+    sale_price:'',
+    preparation:'',
+    notes:'',
+    ingredients:[]
+  };
+
+  const [rows,setRows]=useState([]);
+  const [open,setOpen]=useState(false);
+  const [editing,setEditing]=useState(null);
+  const [form,setForm]=useState(blank);
+  const [query,setQuery]=useState('');
+  const [category,setCategory]=useState('Todas');
+  const [uploading,setUploading]=useState(false);
+  const [savingLabor,setSavingLabor]=useState(false);
+
+  async function load(){
+    const {data,error}=await supabase
+      .from('recipes')
+      .select('*, recipe_ingredients(*)')
+      .order('created_at',{ascending:false});
+
+    if(error) notify(error.message);
+    else setRows(data||[]);
+  }
+
+  useEffect(()=>{
+    load();
+  },[]);
+
+  const laborSettings={
+    desired_monthly_income:Number(profile?.desired_monthly_income)||0,
+    work_hours_per_day:Number(profile?.work_hours_per_day)||8,
+    work_days_per_week:Number(profile?.work_days_per_week)||5
+  };
+
+  const monthlyHours=
+    laborSettings.work_hours_per_day *
+    laborSettings.work_days_per_week *
+    4.33;
+
+  const hourlyRate=
+    monthlyHours>0
+      ? laborSettings.desired_monthly_income/monthlyHours
+      : 0;
+
+  const filtered=rows.filter(r=>
+    (!query || r.name.toLowerCase().includes(query.toLowerCase())) &&
+    (category==='Todas' || r.category===category)
+  );
+
+  const calc=useMemo(()=>{
+    const ingredientTotal=(form.ingredients||[]).reduce(
+      (total,item)=>
+        total+
+        (Number(item.quantity)||0)*
+        (Number(item.unit_cost)||0),
+      0
+    );
+
+    const prepMinutes=Math.max(
+      Number(form.prep_time_minutes)||0,
+      0
+    );
+
+    const laborCost=
+      prepMinutes>0
+        ? (prepMinutes/60)*hourlyRate
+        : 0;
+
+    const totalCost=ingredientTotal+laborCost;
+
+    const yieldAmount=
+      Math.max(Number(form.yield_amount)||0,0);
+
+    const unitCost=
+      yieldAmount>0
+        ? totalCost/yieldAmount
+        : 0;
+
+    const margin=clamp(
+      form.desired_margin,
+      0,
+      99.99
+    );
+
+    const suggestedPrice=
+      unitCost>0
+        ? unitCost/(1-margin/100)
+        : 0;
+
+    return{
+      ingredientTotal,
+      laborCost,
+      totalCost,
+      unitCost,
+      suggestedPrice,
+      prepMinutes
+    };
+  },[
+    form.ingredients,
+    form.yield_amount,
+    form.desired_margin,
+    form.prep_time_minutes,
+    hourlyRate
+  ]);
+
+  function setF(key,value){
+    setForm(current=>({
+      ...current,
+      [key]:value
+    }));
+  }
+
+  async function saveLaborSettings(){
+    setSavingLabor(true);
+
+    const payload={
+      desired_monthly_income:
+        Math.max(
+          Number(profile?.desired_monthly_income)||0,
+          0
+        ),
+
+      work_hours_per_day:
+        Math.max(
+          Number(profile?.work_hours_per_day)||0,
+          0
+        ),
+
+      work_days_per_week:
+        Math.max(
+          Number(profile?.work_days_per_week)||0,
+          0
+        )
+    };
+
+    const {error}=await supabase
+      .from('profiles')
+      .update(payload)
+      .eq('id',session.user.id);
+
+    if(error){
+      notify(error.message);
+    }else{
+      setProfile(current=>({
+        ...current,
+        ...payload
+      }));
+
+      notify('Configuração da sua hora de trabalho salva.');
     }
-    @media(max-width:420px){
-      .recipe-actions{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:7px}
-      .recipe-actions select,.recipe-actions .primary{height:46px!important;min-height:46px!important;font-size:12px!important}
+
+    setSavingLabor(false);
+  }
+
+  function openNew(){
+    setEditing(null);
+
+    setForm({
+      ...blank,
+      ingredients:[
+        {
+          id:uid(),
+          name:'',
+          quantity:'',
+          unit:'g',
+          unit_cost:''
+        }
+      ]
+    });
+
+    setOpen(true);
+  }
+
+  function openEdit(recipe){
+    setEditing(recipe);
+
+    setForm({
+      name:recipe.name||'',
+      category:recipe.category||'Outros',
+      photo_url:recipe.photo_url||'',
+      yield_amount:recipe.yield_amount||1,
+      yield_unit:recipe.yield_unit||'un',
+      portion_size:recipe.portion_size||'',
+      prep_time_minutes:recipe.prep_time_minutes||'',
+      desired_margin:recipe.desired_margin||40,
+      sale_price:recipe.sale_price||'',
+      preparation:recipe.preparation||'',
+      notes:recipe.notes||'',
+
+      ingredients:
+        (recipe.recipe_ingredients||[]).map(item=>({
+          id:item.id,
+          name:item.name,
+          quantity:item.quantity,
+          unit:item.unit,
+          unit_cost:item.unit_cost
+        }))
+    });
+
+    setOpen(true);
+  }
+
+  async function upload(e){
+    const file=e.target.files?.[0];
+
+    if(!file) return;
+
+    if(file.size>5*1024*1024){
+      notify('A foto pode ter no máximo 5 MB.');
+      return;
     }
-  `}</style>
-  <div className="page-tools recipe-page-tools">
-    <div className="recipe-search-wrap">
-      <div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar receita..."/></div>
+
+    setUploading(true);
+
+    const extension=
+      file.name.split('.').pop()?.toLowerCase()||'jpg';
+
+    const path=
+      `${session.user.id}/${uid()}.${extension}`;
+
+    const {error}=await supabase.storage
+      .from('recipe-images')
+      .upload(
+        path,
+        file,
+        {
+          upsert:false,
+          contentType:file.type
+        }
+      );
+
+    if(error){
+      notify(error.message);
+    }else{
+      const {data}=supabase.storage
+        .from('recipe-images')
+        .getPublicUrl(path);
+
+      setF('photo_url',data.publicUrl);
+
+      notify('Foto adicionada.');
+    }
+
+    setUploading(false);
+  }
+
+  function updateIngredient(id,key,value){
+    setF(
+      'ingredients',
+      (form.ingredients||[]).map(item=>
+        item.id===id
+          ? {...item,[key]:value}
+          : item
+      )
+    );
+  }
+
+  function addIngredient(){
+    setF(
+      'ingredients',
+      [
+        ...(form.ingredients||[]),
+        {
+          id:uid(),
+          name:'',
+          quantity:'',
+          unit:'g',
+          unit_cost:''
+        }
+      ]
+    );
+  }
+
+  function removeIngredient(id){
+    setF(
+      'ingredients',
+      (form.ingredients||[]).filter(
+        item=>item.id!==id
+      )
+    );
+  }
+
+  async function save(e){
+    e.preventDefault();
+
+    if(!form.name.trim()){
+      notify('Informe o nome da receita.');
+      return;
+    }
+
+    const payload={
+      user_id:session.user.id,
+      name:form.name.trim(),
+      category:form.category,
+      photo_url:form.photo_url||null,
+
+      yield_amount:
+        Number(form.yield_amount)||1,
+
+      yield_unit:form.yield_unit,
+
+      yield_units:
+        `${Number(form.yield_amount)||1} ${form.yield_unit}`,
+
+      portion_size:
+        form.portion_size||null,
+
+      prep_time_minutes:
+        Number(form.prep_time_minutes)||0,
+
+      ingredient_cost:
+        calc.ingredientTotal,
+
+      labor_cost:
+        calc.laborCost,
+
+      cost:
+        calc.totalCost,
+
+      unit_cost:
+        calc.unitCost,
+
+      suggested_price:
+        calc.suggestedPrice,
+
+      sale_price:
+        Number(form.sale_price)||0,
+
+      desired_margin:
+        clamp(form.desired_margin,0,99.99),
+
+      preparation:
+        form.preparation||null,
+
+      notes:
+        form.notes||null
+    };
+
+    let recipeId=editing?.id;
+    let error;
+
+    if(editing){
+
+  ({error}=await supabase
+    .from('recipes')
+    .update(payload)
+    .eq('id',editing.id));
+
+  if(error){
+    notify(error.message);
+    return;
+  }
+
+  const {error: deleteError}=await supabase
+    .from('recipe_ingredients')
+    .delete()
+    .eq('recipe_id',editing.id);
+
+  if(deleteError){
+    notify(deleteError.message);
+    return;
+  }
+
+}else{
+
+      const result=await supabase
+        .from('recipes')
+        .insert(payload)
+        .select('id')
+        .single();
+
+      recipeId=result.data?.id;
+      error=result.error;
+    }
+
+    if(!error && recipeId){
+
+      const ingredients=
+        (form.ingredients||[])
+          .filter(item=>item.name.trim())
+          .map(item=>({
+            recipe_id:recipeId,
+            user_id:session.user.id,
+            name:item.name.trim(),
+            quantity:Number(item.quantity)||0,
+            unit:item.unit,
+            unit_cost:Number(item.unit_cost)||0
+          }));
+
+      if(ingredients.length){
+
+        const result=await supabase
+          .from('recipe_ingredients')
+          .insert(ingredients);
+
+        error=result.error;
+      }
+    }
+
+    if(error){
+
+      notify(error.message);
+
+    }else{
+
+      setOpen(false);
+
+      notify(
+        editing
+          ? 'Cálculo atualizado.'
+          : 'Cálculo salvo.'
+      );
+
+      load();
+    }
+  }
+
+  async function remove(recipe){
+
+    if(
+      !window.confirm(
+        `Excluir o cálculo “${recipe.name}”?`
+      )
+    ){
+      return;
+    }
+
+    const {error}=await supabase
+      .from('recipes')
+      .delete()
+      .eq('id',recipe.id);
+
+    if(error){
+      notify(error.message);
+    }else{
+      notify('Cálculo excluído.');
+      load();
+    }
+  }
+
+  return(
+    <>
+      <style>{`
+
+        /* ==================================================
+           CALCULADORA
+        ================================================== */
+
+        .calculator-tools{
+          display:grid!important;
+          grid-template-columns:minmax(0,1fr) auto;
+          align-items:center;
+          gap:10px!important;
+        }
+
+        .calculator-search{
+          min-width:0;
+        }
+
+        .calculator-search .search-box{
+          width:100%;
+        }
+
+        .calculator-actions{
+          display:grid;
+          grid-template-columns:160px auto;
+          gap:10px;
+        }
+
+        .calculator-actions select,
+        .calculator-actions .primary{
+          height:44px;
+          min-width:0;
+        }
+
+        .calculator-actions .primary{
+          white-space:nowrap;
+        }
+
+        /* ==================================================
+           CONFIGURAÇÃO DA HORA
+        ================================================== */
+
+        .labor-panel{
+          margin-top:14px;
+          padding:20px;
+          background:
+            linear-gradient(
+              135deg,
+              #111414,
+              #101210
+            );
+          border:1px solid rgba(215,255,17,.14);
+          border-radius:16px;
+        }
+
+        .labor-head{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:15px;
+          margin-bottom:15px;
+        }
+
+        .labor-head h2{
+          margin:0;
+          font-size:16px;
+        }
+
+        .labor-head p{
+          margin:5px 0 0;
+          color:var(--muted);
+          font-size:11px;
+          line-height:1.5;
+        }
+
+        .labor-grid{
+          display:grid;
+          grid-template-columns:
+            1.2fr
+            1fr
+            1fr
+            1fr
+            auto;
+          gap:10px;
+          align-items:end;
+        }
+
+        .labor-rate{
+          min-height:44px;
+          padding:9px 12px;
+          border-radius:10px;
+          background:
+            rgba(215,255,17,.07);
+          border:
+            1px solid rgba(215,255,17,.14);
+        }
+
+        .labor-rate small{
+          display:block;
+          color:var(--muted-2);
+          font-size:9px;
+          margin-bottom:3px;
+        }
+
+        .labor-rate b{
+          color:var(--lime);
+          font-size:15px;
+        }
+
+        .calculator-note{
+          margin-top:9px;
+          color:var(--muted-2);
+          font-size:10px;
+          line-height:1.5;
+        }
+
+        /* ==================================================
+           MODAL
+        ================================================== */
+
+        .calculator-modal{
+          width:min(920px,100%)!important;
+        }
+
+        .calculator-modal form{
+          display:grid;
+          gap:14px;
+        }
+
+        .calculator-form-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:12px;
+        }
+
+        .calculator-section{
+          padding:17px;
+          border:
+            1px solid var(--border);
+          border-radius:15px;
+          background:
+            rgba(255,255,255,.012);
+        }
+
+        .calculator-section.full{
+          grid-column:1/-1;
+        }
+
+        .calculator-section-head{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:12px;
+          margin-bottom:15px;
+        }
+
+        .calculator-section-head h3{
+          margin:0;
+          font-size:15px;
+        }
+
+        .calculator-section-head span{
+          display:block;
+          margin-top:4px;
+          color:var(--muted);
+          font-size:10px;
+        }
+
+        /* ==================================================
+           CAMPOS BRANCOS + TEXTO PRETO
+        ================================================== */
+
+        .calculator-modal input,
+        .calculator-modal select,
+        .calculator-modal textarea{
+
+          background:#ffffff!important;
+
+          color:#111111!important;
+
+          -webkit-text-fill-color:#111111!important;
+
+          border:
+            1px solid #d7d7d7!important;
+
+          box-shadow:
+            none!important;
+        }
+
+        .calculator-modal input::placeholder,
+        .calculator-modal textarea::placeholder{
+
+          color:#777777!important;
+
+          opacity:1!important;
+
+          -webkit-text-fill-color:#777777!important;
+        }
+
+        .calculator-modal input:focus,
+        .calculator-modal select:focus,
+        .calculator-modal textarea:focus{
+
+          border-color:
+            #b6d900!important;
+
+          box-shadow:
+            0 0 0 3px
+            rgba(215,255,17,.15)!important;
+
+          outline:none!important;
+        }
+
+        .calculator-modal select{
+          color:#111111!important;
+        }
+
+        .calculator-modal option{
+          color:#111111!important;
+          background:#ffffff!important;
+        }
+
+        /* ==================================================
+           INFORMAÇÕES
+        ================================================== */
+
+        .calculator-info-grid{
+          display:grid;
+          grid-template-columns:
+            1.5fr
+            1fr
+            .8fr
+            .8fr;
+          gap:10px;
+        }
+
+        .calculator-photo{
+          display:flex;
+          align-items:center;
+          gap:12px;
+          margin-top:13px;
+          padding-top:13px;
+          border-top:
+            1px solid var(--border);
+        }
+
+        .calculator-photo-preview{
+          width:66px;
+          height:66px;
+          display:grid;
+          place-items:center;
+          overflow:hidden;
+          border-radius:12px;
+          background:#0b0d0e;
+          border:
+            1px dashed var(--border-strong);
+          color:var(--muted-2);
+        }
+
+        .calculator-photo-preview img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+        }
+
+        .calculator-photo p{
+          margin:4px 0 7px;
+          color:var(--muted-2);
+          font-size:9px;
+        }
+
+        /* ==================================================
+           INGREDIENTES
+        ================================================== */
+
+        .ingredient-list{
+          display:grid;
+          gap:7px;
+        }
+
+        .ingredient-head,
+        .ingredient-row{
+          display:grid;
+          grid-template-columns:
+            minmax(170px,1.7fr)
+            105px
+            90px
+            115px
+            100px
+            38px;
+          gap:7px;
+          align-items:center;
+        }
+
+        .ingredient-head{
+          padding:0 8px;
+          color:var(--muted-2);
+          font-size:8px;
+          font-weight:700;
+          text-transform:uppercase;
+          letter-spacing:.06em;
+        }
+
+        .ingredient-row{
+          padding:7px;
+          background:
+            rgba(255,255,255,.018);
+          border:
+            1px solid rgba(255,255,255,.05);
+          border-radius:10px;
+        }
+
+        .ingredient-row input,
+        .ingredient-row select{
+          height:40px!important;
+          min-height:40px!important;
+          padding:0 10px!important;
+          border-radius:9px!important;
+        }
+
+        .ingredient-row b{
+          color:#e5e8e6;
+          font-size:11px;
+          text-align:right;
+        }
+
+        .ingredient-total{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-top:9px;
+          padding:12px;
+          border-radius:10px;
+          background:#0d1010;
+          border:1px solid var(--border);
+        }
+
+        .ingredient-total span{
+          color:var(--muted);
+          font-size:10px;
+        }
+
+        .ingredient-total b{
+          color:#fff;
+          font-size:15px;
+        }
+
+        /* ==================================================
+           RESUMO DOS CUSTOS
+        ================================================== */
+
+        .cost-breakdown{
+          display:grid;
+          grid-template-columns:
+            repeat(4,1fr);
+          gap:8px;
+          margin-top:12px;
+        }
+
+        .cost-box{
+          padding:12px;
+          border-radius:10px;
+          background:#0d1010;
+          border:
+            1px solid var(--border);
+        }
+
+        .cost-box small{
+          display:block;
+          color:var(--muted-2);
+          font-size:8px;
+          margin-bottom:5px;
+        }
+
+        .cost-box b{
+          font-size:13px;
+        }
+
+        .cost-box.highlight{
+          background:
+            rgba(215,255,17,.06);
+          border-color:
+            rgba(215,255,17,.20);
+        }
+
+        .cost-box.highlight b{
+          color:var(--lime);
+        }
+
+        /* ==================================================
+           PREÇO
+        ================================================== */
+
+        .price-layout{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:10px;
+        }
+
+        .price-card{
+          padding:15px;
+          border-radius:12px;
+          background:#0d1010;
+          border:1px solid var(--border);
+        }
+
+        .price-card small{
+          display:block;
+          color:var(--muted-2);
+          font-size:9px;
+          margin-bottom:5px;
+        }
+
+        .price-card b{
+          font-size:20px;
+        }
+
+        .price-card.suggested{
+          background:
+            rgba(215,255,17,.07);
+          border-color:
+            rgba(215,255,17,.20);
+        }
+
+        .price-card.suggested b{
+          color:var(--lime);
+        }
+
+        .calculator-modal textarea{
+          min-height:100px;
+        }
+
+        .formula{
+          margin-top:11px;
+          padding:11px 12px;
+          display:flex;
+          gap:9px;
+          align-items:flex-start;
+          border-radius:10px;
+          background:
+            rgba(215,255,17,.035);
+          color:var(--muted);
+          font-size:9px;
+          line-height:1.6;
+        }
+
+        .formula svg{
+          flex:0 0 auto;
+          color:var(--lime);
+        }
+
+        /* ==================================================
+           MOBILE
+        ================================================== */
+
+        @media(max-width:760px){
+
+          .calculator-tools{
+            grid-template-columns:1fr!important;
+            gap:9px!important;
+            margin-top:14px!important;
+            margin-bottom:12px!important;
+          }
+
+          .calculator-search .search-box{
+            height:48px!important;
+          }
+
+          .calculator-actions{
+            grid-template-columns:
+              1fr 1.25fr!important;
+            gap:8px;
+          }
+
+          .calculator-actions select,
+          .calculator-actions .primary{
+            height:48px!important;
+            border-radius:13px!important;
+          }
+
+          .labor-panel{
+            padding:15px;
+          }
+
+          .labor-head{
+            display:block;
+          }
+
+          .labor-head .secondary{
+            margin-top:10px;
+          }
+
+          .labor-grid{
+            grid-template-columns:1fr 1fr;
+          }
+
+          .labor-grid .field:first-child{
+            grid-column:1/-1;
+          }
+
+          .labor-rate{
+            grid-column:1/-1;
+          }
+
+          .calculator-form-grid{
+            grid-template-columns:1fr;
+          }
+
+          .calculator-section.full{
+            grid-column:auto;
+          }
+
+          .calculator-info-grid{
+            grid-template-columns:1fr 1fr;
+          }
+
+          .calculator-info-grid .field:first-child{
+            grid-column:1/-1;
+          }
+
+          .ingredient-head{
+            display:none;
+          }
+
+          .ingredient-row{
+            grid-template-columns:
+              minmax(0,1fr)
+              80px
+              80px
+              38px;
+
+            gap:7px;
+            padding:9px;
+          }
+
+          .ingredient-row input:first-child{
+            grid-column:1/-1;
+          }
+
+          .ingredient-row input:nth-child(2){
+            grid-column:1/2;
+          }
+
+          .ingredient-row select{
+            grid-column:2/3;
+          }
+
+          .ingredient-row input:nth-child(4){
+            grid-column:1/2;
+          }
+
+          .ingredient-row b{
+            grid-column:2/4;
+            text-align:right;
+            padding-right:4px;
+          }
+
+          .ingredient-row .danger{
+            grid-column:4;
+          }
+
+          .cost-breakdown{
+            grid-template-columns:1fr 1fr;
+          }
+
+          .price-layout{
+            grid-template-columns:1fr 1fr;
+          }
+        }
+
+        @media(max-width:420px){
+
+          .labor-grid{
+            grid-template-columns:1fr;
+          }
+
+          .labor-grid .field:first-child{
+            grid-column:auto;
+          }
+
+          .calculator-info-grid{
+            grid-template-columns:1fr;
+          }
+
+          .calculator-info-grid .field:first-child{
+            grid-column:auto;
+          }
+
+          .ingredient-row{
+            grid-template-columns:
+              minmax(0,1fr)
+              72px
+              38px;
+          }
+
+          .ingredient-row input:nth-child(2){
+            grid-column:1/2;
+          }
+
+          .ingredient-row select{
+            grid-column:2/3;
+          }
+
+          .ingredient-row input:nth-child(4){
+            grid-column:1/2;
+          }
+
+          .ingredient-row b{
+            grid-column:2/3;
+          }
+
+          .ingredient-row .danger{
+            grid-column:3;
+          }
+
+          .cost-breakdown,
+          .price-layout{
+            grid-template-columns:1fr;
+          }
+        }
+
+      `}</style>
+
+      <div className="page-tools calculator-tools">
+
+        <div className="calculator-search">
+          <div className="search-box">
+            <Search size={17}/>
+            <input
+              value={query}
+              onChange={e=>setQuery(e.target.value)}
+              placeholder="Buscar cálculo ou receita..."
+            />
+          </div>
+        </div>
+
+        <div className="calculator-actions">
+
+          <select
+            value={category}
+            onChange={e=>setCategory(e.target.value)}
+          >
+            <option>Todas</option>
+
+            {CATEGORIES.map(item=>
+              <option key={item}>{item}</option>
+            )}
+          </select>
+
+          <button
+            className="primary"
+            onClick={openNew}
+          >
+            <Plus size={17}/>
+            Calcular receita
+          </button>
+
+        </div>
+
+      </div>
+
+      <section className="labor-panel">
+
+        <div className="labor-head">
+
+          <div>
+            <h2>
+              Quanto vale sua hora de trabalho?
+            </h2>
+
+            <p>
+              Informe sua meta mensal e o Confeasy
+              transforma seu tempo em custo real de produção.
+            </p>
+          </div>
+
+          <button
+            className="secondary small"
+            onClick={saveLaborSettings}
+            disabled={savingLabor}
+          >
+            {savingLabor
+              ? 'Salvando…'
+              : 'Salvar configuração'}
+          </button>
+
+        </div>
+
+        <div className="labor-grid">
+
+          <Field label="Quanto quero ganhar por mês">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={profile?.desired_monthly_income||''}
+              onChange={e=>
+                setProfile(p=>({
+                  ...p,
+                  desired_monthly_income:e.target.value
+                }))
+              }
+              placeholder="Ex.: 5.000"
+            />
+          </Field>
+
+          <Field label="Horas por dia">
+            <input
+              type="number"
+              min="0"
+              max="24"
+              step="0.5"
+              value={profile?.work_hours_per_day??8}
+              onChange={e=>
+                setProfile(p=>({
+                  ...p,
+                  work_hours_per_day:e.target.value
+                }))
+              }
+            />
+          </Field>
+
+          <Field label="Dias por semana">
+            <input
+              type="number"
+              min="0"
+              max="7"
+              step="0.5"
+              value={profile?.work_days_per_week??5}
+              onChange={e=>
+                setProfile(p=>({
+                  ...p,
+                  work_days_per_week:e.target.value
+                }))
+              }
+            />
+          </Field>
+
+          <div className="labor-rate">
+            <small>
+              Sua hora de trabalho
+            </small>
+
+            <b>
+              {money(hourlyRate)}
+            </b>
+          </div>
+
+        </div>
+
+        <div className="calculator-note">
+          Base de cálculo: 4,33 semanas por mês.
+          Esse valor será aplicado automaticamente
+          às receitas conforme o tempo de produção.
+        </div>
+
+      </section>
+
+      {
+        filtered.length
+        ?
+        <div className="recipe-grid">
+
+          {filtered.map(recipe=>
+
+            <article
+              className="recipe-card"
+              key={recipe.id}
+            >
+
+              <div className="recipe-photo">
+
+                {
+                  recipe.photo_url
+                  ?
+                  <img
+                    src={recipe.photo_url}
+                    alt=""
+                  />
+                  :
+                  <CakeSlice size={34}/>
+                }
+
+                <span>
+                  {recipe.category}
+                </span>
+
+              </div>
+
+              <div className="recipe-card-body">
+
+                <div className="recipe-title">
+
+                  <h3>
+                    {recipe.name}
+                  </h3>
+
+                  <button
+                    className="icon-button"
+                    onClick={()=>
+                      openEdit(recipe)
+                    }
+                  >
+                    <Edit3 size={16}/>
+                  </button>
+
+                </div>
+
+                <p>
+                  {
+                    recipe.portion_size ||
+                    `${recipe.yield_amount||1} ${recipe.yield_unit||'un'}`
+                  }
+                </p>
+
+                <div className="recipe-metrics">
+
+                  <div>
+                    <small>
+                      Custo/un.
+                    </small>
+
+                    <b>
+                      {money(recipe.unit_cost)}
+                    </b>
+                  </div>
+
+                  <div>
+                    <small>
+                      Preço sugerido
+                    </small>
+
+                    <b className="green-text">
+                      {money(recipe.suggested_price)}
+                    </b>
+                  </div>
+
+                </div>
+
+                <div className="recipe-footer">
+
+                  <span>
+                    Venda: {money(recipe.sale_price)}
+                  </span>
+
+                  <button
+                    className="danger-link"
+                    onClick={()=>
+                      remove(recipe)
+                    }
+                  >
+                    <Trash2 size={14}/>
+                  </button>
+
+                </div>
+
+              </div>
+
+            </article>
+
+          )}
+
+        </div>
+
+        :
+
+        <section className="panel calculator-empty">
+
+          <BarChart3
+            size={30}
+            style={{
+              color:'var(--lime)',
+              margin:'0 auto'
+            }}
+          />
+
+          <h3>
+            {
+              rows.length
+              ? 'Nenhum cálculo encontrado.'
+              : 'Sua calculadora está pronta.'
+            }
+          </h3>
+
+          <p>
+            {
+              rows.length
+              ?
+              'Tente outro nome ou categoria.'
+              :
+              'Cadastre uma receita, informe os ingredientes e o tempo de produção. O Confeasy calcula o custo real e o preço sugerido.'
+            }
+          </p>
+
+          <button
+            className="primary"
+            onClick={openNew}
+          >
+            <Plus size={16}/>
+            Calcular primeira receita
+          </button>
+
+        </section>
+      }
+
+      {
+        open &&
+        <RecipeModal
+          form={form}
+          setF={setF}
+          calc={calc}
+          editing={editing}
+          close={()=>setOpen(false)}
+          save={save}
+          upload={upload}
+          uploading={uploading}
+          updateIng={updateIngredient}
+          addIng={addIngredient}
+          removeIng={removeIngredient}
+        />
+      }
+
+    </>
+  );
+}
+
+
+function RecipeModal({
+  form,
+  setF,
+  calc,
+  editing,
+  close,
+  save,
+  upload,
+  uploading,
+  updateIng,
+  addIng,
+  removeIng
+}){
+
+  return(
+
+    <div className="modal-bg">
+
+      <div className="modal modal-xl calculator-modal">
+
+        <div className="modal-head">
+
+          <div>
+
+            <span className="eyebrow">
+              Calculadora de preço
+            </span>
+
+            <h2>
+              {editing
+                ? 'Editar cálculo'
+                : 'Calcular receita'}
+            </h2>
+
+          </div>
+
+          <button
+            type="button"
+            className="icon-button"
+            onClick={close}
+          >
+            <X size={18}/>
+          </button>
+
+        </div>
+
+        <form onSubmit={save}>
+
+          <div className="calculator-form-grid">
+
+            {/* =================================================
+                1. RECEITA
+            ================================================= */}
+
+            <section className="calculator-section full">
+
+              <div className="calculator-section-head">
+
+                <div>
+
+                  <h3>
+                    1. Sua receita
+                  </h3>
+
+                  <span>
+                    Primeiro informe o que você está produzindo.
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div className="calculator-info-grid">
+
+                <Field label="Nome da receita">
+                  <input
+                    required
+                    value={form.name}
+                    onChange={e=>
+                      setF('name',e.target.value)
+                    }
+                    placeholder="Ex.: Brigadeiro gourmet"
+                  />
+                </Field>
+
+                <Field label="Categoria">
+
+                  <select
+                    value={form.category}
+                    onChange={e=>
+                      setF('category',e.target.value)
+                    }
+                  >
+
+                    {CATEGORIES.map(item=>
+                      <option key={item}>
+                        {item}
+                      </option>
+                    )}
+
+                  </select>
+
+                </Field>
+
+                <Field label="Rendimento">
+
+                  <input
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    value={form.yield_amount}
+                    onChange={e=>
+                      setF(
+                        'yield_amount',
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </Field>
+
+                <Field label="Unidade">
+
+                  <select
+                    value={form.yield_unit}
+                    onChange={e=>
+                      setF(
+                        'yield_unit',
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option>un</option>
+                    <option>kg</option>
+                    <option>g</option>
+                    <option>fatia</option>
+                    <option>porção</option>
+                  </select>
+
+                </Field>
+
+                <Field label="Tamanho / porção">
+
+                  <input
+                    value={form.portion_size}
+                    onChange={e=>
+                      setF(
+                        'portion_size',
+                        e.target.value
+                      )
+                    }
+                    placeholder="Ex.: 20 cm / 10 fatias"
+                  />
+
+                </Field>
+
+                <Field label="Tempo de produção">
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={form.prep_time_minutes}
+                    onChange={e=>
+                      setF(
+                        'prep_time_minutes',
+                        e.target.value
+                      )
+                    }
+                    placeholder="Minutos"
+                  />
+
+                </Field>
+
+              </div>
+
+              <div className="calculator-photo">
+
+                <div className="calculator-photo-preview">
+
+                  {
+                    form.photo_url
+                    ?
+                    <img
+                      src={form.photo_url}
+                      alt="Receita"
+                    />
+                    :
+                    <ImagePlus size={24}/>
+                  }
+
+                </div>
+
+                <div>
+
+                  <b>
+                    Foto da receita
+                  </b>
+
+                  <p>
+                    JPG, PNG ou WEBP · até 5 MB
+                  </p>
+
+                  <label className="secondary small upload-btn">
+
+                    {uploading
+                      ? 'Enviando…'
+                      : 'Escolher foto'}
+
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={upload}
+                      hidden
+                    />
+
+                  </label>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                2. INGREDIENTES
+            ================================================= */}
+
+            <section className="calculator-section full">
+
+              <div className="calculator-section-head">
+
+                <div>
+
+                  <h3>
+                    2. Ingredientes
+                  </h3>
+
+                  <span>
+                    Adicione os ingredientes usados na receita.
+                  </span>
+
+                </div>
+
+                <button
+                  type="button"
+                  className="secondary small"
+                  onClick={addIng}
+                >
+                  <Plus size={15}/>
+                  Adicionar ingrediente
+                </button>
+
+              </div>
+
+              <div className="ingredient-list">
+
+                <div className="ingredient-head">
+
+                  <span>Ingrediente</span>
+                  <span>Quantidade</span>
+                  <span>Unidade</span>
+                  <span>Custo unit.</span>
+                  <span>Total</span>
+                  <span/>
+
+                </div>
+
+                {
+                  (form.ingredients||[]).map(item=>
+
+                    <div
+                      className="ingredient-row"
+                      key={item.id}
+                    >
+
+                      <input
+                        placeholder="Ex.: Chocolate"
+                        value={item.name}
+                        onChange={e=>
+                          updateIng(
+                            item.id,
+                            'name',
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.001"
+                        placeholder="0"
+                        value={item.quantity}
+                        onChange={e=>
+                          updateIng(
+                            item.id,
+                            'quantity',
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <select
+                        value={item.unit}
+                        onChange={e=>
+                          updateIng(
+                            item.id,
+                            'unit',
+                            e.target.value
+                          )
+                        }
+                      >
+
+                        {UNITS.map(unit=>
+                          <option key={unit}>
+                            {unit}
+                          </option>
+                        )}
+
+                      </select>
+
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.0001"
+                        placeholder="0,00"
+                        value={item.unit_cost}
+                        onChange={e=>
+                          updateIng(
+                            item.id,
+                            'unit_cost',
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <b>
+                        {
+                          money(
+                            (Number(item.quantity)||0) *
+                            (Number(item.unit_cost)||0)
+                          )
+                        }
+                      </b>
+
+                      <button
+                        type="button"
+                        className="icon-button danger"
+                        onClick={()=>
+                          removeIng(item.id)
+                        }
+                        aria-label="Remover ingrediente"
+                      >
+                        <Trash2 size={15}/>
+                      </button>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+              <div className="ingredient-total">
+
+                <span>
+                  Custo dos ingredientes
+                </span>
+
+                <b>
+                  {money(calc.ingredientTotal)}
+                </b>
+
+              </div>
+
+              <div className="cost-breakdown">
+
+                <div className="cost-box">
+
+                  <small>
+                    Ingredientes
+                  </small>
+
+                  <b>
+                    {money(calc.ingredientTotal)}
+                  </b>
+
+                </div>
+
+                <div className="cost-box">
+
+                  <small>
+                    Mão de obra
+                  </small>
+
+                  <b>
+                    {money(calc.laborCost)}
+                  </b>
+
+                </div>
+
+                <div className="cost-box">
+
+                  <small>
+                    Tempo de produção
+                  </small>
+
+                  <b>
+                    {
+                      calc.prepMinutes
+                        ? `${calc.prepMinutes} min`
+                        : '—'
+                    }
+                  </b>
+
+                </div>
+
+                <div className="cost-box highlight">
+
+                  <small>
+                    Custo total
+                  </small>
+
+                  <b>
+                    {money(calc.totalCost)}
+                  </b>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                3. PREÇO
+            ================================================= */}
+
+            <section className="calculator-section">
+
+              <div className="calculator-section-head">
+
+                <div>
+
+                  <h3>
+                    3. Quanto cobrar?
+                  </h3>
+
+                  <span>
+                    O Confeasy calcula um preço de referência.
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div className="price-layout">
+
+                <div className="price-card">
+
+                  <small>
+                    Custo por unidade
+                  </small>
+
+                  <b>
+                    {money(calc.unitCost)}
+                  </b>
+
+                </div>
+
+                <div className="price-card suggested">
+
+                  <small>
+                    Preço sugerido
+                  </small>
+
+                  <b>
+                    {money(calc.suggestedPrice)}
+                  </b>
+
+                </div>
+
+              </div>
+
+              <div
+                className="form-grid two"
+                style={{marginTop:10}}
+              >
+
+                <Field label="Margem desejada (%)">
+
+                  <input
+                    type="number"
+                    min="0"
+                    max="99.99"
+                    step="0.01"
+                    value={form.desired_margin}
+                    onChange={e=>
+                      setF(
+                        'desired_margin',
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </Field>
+
+                <Field label="Preço de venda">
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.sale_price}
+                    onChange={e=>
+                      setF(
+                        'sale_price',
+                        e.target.value
+                      )
+                    }
+                    placeholder={
+                      calc.suggestedPrice.toFixed(2)
+                    }
+                  />
+
+                </Field>
+
+              </div>
+
+              <div className="formula">
+
+                <BarChart3 size={17}/>
+
+                <span>
+
+                  <b>
+                    Como calculamos:
+                  </b>
+
+                  {' '}
+                  custo total ÷ rendimento =
+                  custo por unidade.
+
+                  Depois o Confeasy aplica
+                  a margem desejada para
+                  chegar ao preço sugerido.
+
+                </span>
+
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                4. PREPARO
+            ================================================= */}
+
+            <section className="calculator-section">
+
+              <div className="calculator-section-head">
+
+                <div>
+
+                  <h3>
+                    4. Preparo e observações
+                  </h3>
+
+                  <span>
+                    Guarde o passo a passo junto do cálculo.
+                  </span>
+
+                </div>
+
+              </div>
+
+              <Field label="Modo de preparo">
+
+                <textarea
+                  rows="5"
+                  value={form.preparation}
+                  onChange={e=>
+                    setF(
+                      'preparation',
+                      e.target.value
+                    )
+                  }
+                  placeholder="Descreva o passo a passo..."
+                />
+
+              </Field>
+
+              <div style={{height:10}}/>
+
+              <Field label="Observações">
+
+                <textarea
+                  rows="3"
+                  value={form.notes}
+                  onChange={e=>
+                    setF(
+                      'notes',
+                      e.target.value
+                    )
+                  }
+                  placeholder="Validade, conservação, decoração..."
+                />
+
+              </Field>
+
+            </section>
+
+          </div>
+
+          <div className="modal-actions">
+
+            <button
+              type="button"
+              className="secondary"
+              onClick={close}
+            >
+              Cancelar
+            </button>
+
+            <button className="primary">
+
+              {editing
+                ? 'Salvar alterações'
+                : 'Salvar cálculo'}
+
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
     </div>
-    <div className="recipe-actions">
-      <select value={category} onChange={e=>setCategory(e.target.value)}><option>Todas</option>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select>
-      <button className="primary" onClick={openNew}><Plus size={17}/> Nova receita</button>
-    </div>
-  </div>
-  {filtered.length?<div className="recipe-grid">{filtered.map(r=><article className="recipe-card" key={r.id}><div className="recipe-photo">{r.photo_url?<img src={r.photo_url} alt=""/>:<CakeSlice size={34}/>}<span>{r.category}</span></div><div className="recipe-card-body"><div className="recipe-title"><h3>{r.name}</h3><button className="icon-button" onClick={()=>openEdit(r)}><Edit3 size={16}/></button></div><p>{r.portion_size||`${r.yield_amount||1} ${r.yield_unit||'un'}`}</p><div className="recipe-metrics"><div><small>Custo/un.</small><b>{money(r.unit_cost)}</b></div><div><small>Preço sugerido</small><b className="green-text">{money(r.suggested_price)}</b></div></div><div className="recipe-footer"><span>Venda: {money(r.sale_price)}</span><button className="danger-link" onClick={()=>remove(r)}><Trash2 size={14}/></button></div></div></article>)}</div>:<section className="panel"><Empty text={rows.length?'Nenhuma receita corresponde aos filtros.':'Cadastre sua primeira receita e deixe o Confeasy calcular o preço ideal.'} action={!rows.length?'Nova receita':null} onClick={openNew}/></section>}
-  {open&&<RecipeModal form={form} setF={setF} calc={calc} editing={editing} close={()=>setOpen(false)} save={save} upload={upload} uploading={uploading} updateIng={updateIng} addIng={()=>setF('ingredients',[...(form.ingredients||[]),{id:uid(),name:'',quantity:'',unit:'g',unit_cost:''}])} removeIng={id=>setF('ingredients',(form.ingredients||[]).filter(i=>i.id!==id))}/>}
- </>;
-}function RecipeModal({form,setF,calc,editing,close,save,upload,uploading,updateIng,addIng,removeIng}){return <div className="modal-bg"><div className="modal modal-xl"><div className="modal-head"><div><span className="eyebrow">Cadastro de receita</span><h2>{editing?'Editar receita':'Nova receita'}</h2></div><button className="icon-button" onClick={close}><X size={18}/></button></div><form onSubmit={save}><div className="recipe-form-grid"><section className="form-section"><div className="form-section-head"><div><h3>1. Informações</h3><span>Identifique sua receita.</span></div></div><div className="form-grid two"><Field label="Nome da receita"><input required value={form.name} onChange={e=>setF('name',e.target.value)} placeholder="Ex.: Bolo de chocolate"/></Field><Field label="Categoria"><select value={form.category} onChange={e=>setF('category',e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></Field><Field label="Rendimento"><input type="number" min="0.001" step="0.001" value={form.yield_amount} onChange={e=>setF('yield_amount',e.target.value)}/></Field><Field label="Unidade"><select value={form.yield_unit} onChange={e=>setF('yield_unit',e.target.value)}><option>un</option><option>kg</option><option>g</option><option>fatia</option><option>porção</option></select></Field><Field label="Tamanho / porção"><input value={form.portion_size} onChange={e=>setF('portion_size',e.target.value)} placeholder="Ex.: 20 cm / 10 fatias"/></Field></div><div className="photo-upload"><div className="photo-preview">{form.photo_url?<img src={form.photo_url} alt="Receita"/>:<ImagePlus size={28}/>}</div><div><b>Foto da receita</b><p>JPG ou PNG, até 5 MB.</p><label className="secondary small upload-btn">{uploading?'Enviando…':'Escolher foto'}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={upload} hidden/></label></div></div></section><section className="form-section"><div className="form-section-head"><div><h3>2. Ingredientes</h3><span>O custo é calculado automaticamente.</span></div><button type="button" className="secondary small" onClick={addIng}><Plus size={15}/> Ingrediente</button></div><div className="ingredient-head"><span>Ingrediente</span><span>Quantidade</span><span>Unidade</span><span>Custo unit.</span><span>Total</span><span/></div>{(form.ingredients||[]).map(i=><div className="ingredient-row" key={i.id}><input placeholder="Ex.: Farinha" value={i.name} onChange={e=>updateIng(i.id,'name',e.target.value)}/><input type="number" min="0" step="0.001" value={i.quantity} onChange={e=>updateIng(i.id,'quantity',e.target.value)}/><select value={i.unit} onChange={e=>updateIng(i.id,'unit',e.target.value)}>{UNITS.map(u=><option key={u}>{u}</option>)}</select><input type="number" min="0" step="0.0001" value={i.unit_cost} onChange={e=>updateIng(i.id,'unit_cost',e.target.value)}/><b>{money((Number(i.quantity)||0)*(Number(i.unit_cost)||0))}</b><button type="button" className="icon-button danger" onClick={()=>removeIng(i.id)}><Trash2 size={15}/></button></div>)}<div className="cost-total"><span>Custo total da receita</span><b>{money(calc.total)}</b></div></section><section className="form-section"><div className="form-section-head"><div><h3>3. Preço e margem</h3><span>O Confeasy sugere o preço automaticamente.</span></div></div><div className="pricing-grid"><div className="price-box"><small>Custo total</small><b>{money(calc.total)}</b></div><div className="price-box"><small>Custo por unidade</small><b>{money(calc.unit)}</b></div><Field label="Margem desejada (%)"><input type="number" min="0" max="99.99" step="0.01" value={form.desired_margin} onChange={e=>setF('desired_margin',e.target.value)}/></Field><div className="price-box highlight"><small>Preço sugerido</small><b>{money(calc.suggested)}</b></div><Field label="Preço de venda"><input type="number" min="0" step="0.01" value={form.sale_price} onChange={e=>setF('sale_price',e.target.value)} placeholder={calc.suggested.toFixed(2)}/></Field></div><div className="formula"><BarChart3 size={17}/><span><b>Como calculamos:</b> preço sugerido = custo por unidade ÷ (1 − margem). Com custo de R$ 10 e margem de 40%, o preço sugerido é R$ 16,67.</span></div></section><section className="form-section"><div className="form-section-head"><div><h3>4. Preparo e observações</h3><span>Guarde o passo a passo junto da receita.</span></div></div><Field label="Modo de preparo"><textarea rows="6" value={form.preparation} onChange={e=>setF('preparation',e.target.value)} placeholder="Descreva o modo de preparo..."/></Field><Field label="Observações"><textarea rows="3" value={form.notes} onChange={e=>setF('notes',e.target.value)} placeholder="Dicas, validade, conservação, decoração..."/></Field></section></div><div className="modal-actions"><button type="button" className="secondary" onClick={close}>Cancelar</button><button className="primary">{editing?'Salvar alterações':'Cadastrar receita'}</button></div></form></div></div>}
+  );
+}
 
 function Orders({session,notify,setPage}){const blank={client_name:'',client_phone:'',item_name:'',delivery_date:'',delivery_time:'',value:'',deposit:'',payment_method:'Pix',status:'Pendente',notes:''};const[rows,setRows]=useState([]),[open,setOpen]=useState(false),[editing,setEditing]=useState(null),[form,setForm]=useState(blank),[query,setQuery]=useState('');async function load(){const{data,error}=await supabase.from('orders').select('*').order('delivery_date',{ascending:true});if(error)notify(error.message);else setRows(data||[])}useEffect(()=>{load()},[]);const filtered=rows.filter(r=>!query||`${r.client_name} ${r.item_name}`.toLowerCase().includes(query.toLowerCase()));function openNew(){setEditing(null);setForm(blank);setOpen(true)}function edit(r){setEditing(r);setForm({...blank,...r});setOpen(true)}async function save(e){e.preventDefault();const payload={user_id:session.user.id,client_name:form.client_name.trim(),client_phone:form.client_phone||null,item_name:form.item_name.trim(),delivery_date:form.delivery_date||null,delivery_time:form.delivery_time||null,value:Number(form.value)||0,deposit:Number(form.deposit)||0,payment_method:form.payment_method,status:form.status,notes:form.notes||null};const res=editing?await supabase.from('orders').update(payload).eq('id',editing.id):await supabase.from('orders').insert(payload);if(res.error)notify(res.error.message);else{setOpen(false);notify(editing?'Pedido atualizado.':'Pedido cadastrado.');load()}}async function remove(r){if(!confirm(`Excluir o pedido de ${r.client_name}?`))return;const{error}=await supabase.from('orders').delete().eq('id',r.id);if(error)notify(error.message);else{notify('Pedido excluído.');load()}}return <><div className="page-tools standard-page-tools"><div className="standard-search-wrap"><div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar cliente ou pedido..."/></div></div><div className="standard-actions"><button className="primary" onClick={openNew}><Plus size={17}/> Novo pedido</button></div></div><section className="panel orders-page-panel"><div className="section-head"><div><h2>Agenda de pedidos</h2><span>{filtered.length} pedidos</span></div></div>{filtered.length?<><div className="table-wrap orders-table-desktop"><table><thead><tr><th>Cliente</th><th>Pedido</th><th>Entrega</th><th>Valor</th><th>Sinal</th><th>Status</th><th/></tr></thead><tbody>{filtered.map(r=><tr key={r.id}><td><b>{r.client_name}</b><small className="table-sub">{r.client_phone||'Sem WhatsApp'}</small></td><td>{r.item_name}</td><td>{dateBR(r.delivery_date)}{r.delivery_time&&<small className="table-sub">{r.delivery_time}</small>}</td><td>{money(r.value)}</td><td>{money(r.deposit)}</td><td><span className={`pill ${['Pago','Entregue'].includes(r.status)?'ok':''}`}>{r.status}</span></td><td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button><button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div><div className="orders-mobile-list">{filtered.map(r=><article className="order-mobile-card" key={`mobile-${r.id}`}><div className="order-mobile-top"><div><strong>{r.client_name}</strong><small>{r.client_phone||'Sem WhatsApp'}</small></div><span className={`pill ${['Pago','Entregue'].includes(r.status)?'ok':''}`}>{r.status}</span></div><div className="order-mobile-product">{r.item_name}</div><div className="order-mobile-meta"><div><small>Entrega</small><strong>{dateBR(r.delivery_date)}{r.delivery_time?` • ${r.delivery_time}`:''}</strong></div><div><small>Valor</small><strong>{money(r.value)}</strong></div><div><small>Sinal</small><strong>{money(r.deposit)}</strong></div></div><div className="order-mobile-actions"><button className="secondary" onClick={()=>edit(r)}><Edit3 size={15}/> Editar</button><button className="secondary danger" onClick={()=>remove(r.id)}><Trash2 size={15}/> Excluir</button></div></article>)}</div></>:<Empty text="Nenhum pedido encontrado." action="Novo pedido" onClick={openNew}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar pedido':'Novo pedido'}><form className="form" onSubmit={save}><div className="form-grid two"><Field label="Cliente"><input required value={form.client_name} onChange={e=>setForm({...form,client_name:e.target.value})}/></Field><Field label="WhatsApp"><input value={form.client_phone} onChange={e=>setForm({...form,client_phone:e.target.value})} placeholder="(47) 99999-9999"/></Field><Field label="Produto / pedido"><input required value={form.item_name} onChange={e=>setForm({...form,item_name:e.target.value})}/></Field><Field label="Data de entrega"><input type="date" value={form.delivery_date} onChange={e=>setForm({...form,delivery_date:e.target.value})}/></Field><Field label="Horário"><input type="time" value={form.delivery_time} onChange={e=>setForm({...form,delivery_time:e.target.value})}/></Field><Field label="Valor total"><input type="number" step="0.01" value={form.value} onChange={e=>setForm({...form,value:e.target.value})}/></Field><Field label="Sinal recebido"><input type="number" step="0.01" value={form.deposit} onChange={e=>setForm({...form,deposit:e.target.value})}/></Field><Field label="Forma de pagamento"><select value={form.payment_method} onChange={e=>setForm({...form,payment_method:e.target.value})}><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>A combinar</option></select></Field><Field label="Status"><select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{ORDER_STATUS.map(s=><option key={s}>{s}</option>)}</select></Field></div><Field label="Observações"><textarea rows="4" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></Field><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar pedido</button></div></form></Modal>}</>}
 
