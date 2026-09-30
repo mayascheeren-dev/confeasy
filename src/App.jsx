@@ -1224,3 +1224,4 @@ function Modal({open,close,title,children}){
     </div>
   </div>;
 }
+export default App;
