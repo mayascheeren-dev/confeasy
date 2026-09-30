@@ -1395,3 +1395,105 @@ tbody tr:hover td {
     font-size: 9px !important;
   }
 }
+/* =========================================================
+   CONFEASY — RECEITAS / AJUSTE FINAL DO MOBILE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  /* Área geral de ferramentas da aba Receitas */
+  .recipe-page-tools {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Busca ocupa toda a largura */
+  .recipe-page-tools .recipe-search-wrap {
+    width: 100% !important;
+  }
+
+  .recipe-page-tools .search-box {
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .recipe-page-tools .search-box input {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 14px !important;
+  }
+
+  /* Filtro + Nova receita */
+  .recipe-page-tools .recipe-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  .recipe-page-tools .recipe-actions select {
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    min-width: 0 !important;
+    padding: 0 10px !important;
+    border-radius: 13px !important;
+    background: #111314 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    font-size: 13px !important;
+  }
+
+  .recipe-page-tools .recipe-actions .primary {
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    border-radius: 13px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    padding: 0 10px !important;
+  }
+
+  /* Estado vazio */
+  .recipes-page .panel {
+    margin-top: 4px !important;
+    border-radius: 18px !important;
+  }
+
+  .recipes-page .empty {
+    min-height: 210px !important;
+    padding: 28px 18px !important;
+  }
+}
+
+/* Telefones pequenos */
+@media (max-width: 420px) {
+
+  .recipe-page-tools {
+    gap: 8px !important;
+  }
+
+  .recipe-page-tools .recipe-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) !important;
+    gap: 7px !important;
+  }
+
+  .recipe-page-tools .search-box {
+    height: 46px !important;
+    min-height: 46px !important;
+  }
+
+  .recipe-page-tools .recipe-actions select,
+  .recipe-page-tools .recipe-actions .primary {
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 12px !important;
+  }
+}
