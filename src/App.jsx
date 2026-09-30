@@ -2122,7 +2122,74 @@ function Orders({session,notify,setPage}){const blank={client_name:'',client_pho
 
 function Finance({session,notify}){const[orders,setOrders]=useState([]),[expenses,setExpenses]=useState([]),[open,setOpen]=useState(false),[form,setForm]=useState({description:'',category:'Ingredientes',value:'',date:todayISO()});async function load(){const[o,e]=await Promise.all([supabase.from('orders').select('value,deposit,status,delivery_date'),supabase.from('expenses').select('*').order('date',{ascending:false}).order('created_at',{ascending:false})]);setOrders(o.data||[]);setExpenses(e.data||[])}useEffect(()=>{load()},[]);const sales=orders.reduce((s,x)=>s+Number(x.value||0),0),received=orders.reduce((s,x)=>s+Number(x.deposit||0),0),exp=expenses.reduce((s,x)=>s+Number(x.value||0),0);async function add(e){e.preventDefault();const{error}=await supabase.from('expenses').insert({user_id:session.user.id,description:form.description.trim(),category:form.category,value:Number(form.value)||0,date:form.date});if(error)notify(error.message);else{setOpen(false);setForm({description:'',category:'Ingredientes',value:'',date:todayISO()});notify('Despesa lançada.');load()}}async function remove(id){if(!confirm('Excluir esta despesa?'))return;const{error}=await supabase.from('expenses').delete().eq('id',id);if(error)notify(error.message);else load()}return <><div className="stats"><Stat label="Pedidos registrados" value={money(sales)}/><Stat label="Recebido em sinais" value={money(received)} green/><Stat label="Despesas" value={money(exp)}/><Stat label="Resultado registrado" value={money(received-exp)} green/></div><section className="panel"><div className="section-head"><div><h2>Despesas</h2><span>Controle seus custos por categoria.</span></div><button className="primary" onClick={()=>setOpen(true)}><Plus size={16}/> Nova despesa</button></div>{expenses.length?<div className="table-wrap"><table><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th><th/></tr></thead><tbody>{expenses.map(e=><tr key={e.id}><td>{e.description}</td><td><span className="pill">{e.category}</span></td><td>{dateBR(e.date)}</td><td>{money(e.value)}</td><td><button className="icon-button danger" onClick={()=>remove(e.id)}><Trash2 size={15}/></button></td></tr>)}</tbody></table></div>:<Empty text="Nenhuma despesa registrada." action="Nova despesa" onClick={()=>setOpen(true)}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title="Nova despesa"><form className="form" onSubmit={add}><Field label="Descrição"><input required value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Ex.: chocolate, caixa, anúncio..."/></Field><div className="form-grid two"><Field label="Categoria"><select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>{EXPENSE_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></Field><Field label="Valor"><input required type="number" step="0.01" min="0" value={form.value} onChange={e=>setForm({...form,value:e.target.value})}/></Field><Field label="Data"><input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></Field></div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Lançar despesa</button></div></form></Modal>}</>}
 
-function Pantry({session,notify}){const blank={name:'',quantity:'',unit:'g',unit_cost:'',min_quantity:'0'};const[rows,setRows]=useState([]),[open,setOpen]=useState(false),[editing,setEditing]=useState(null),[form,setForm]=useState(blank),[query,setQuery]=useState('');async function load(){const{data,error}=await supabase.from('ingredients').select('*').order('name');if(error)notify(error.message);else setRows(data||[])}useEffect(()=>{load()},[]);const filtered=rows.filter(r=>!query||r.name.toLowerCase().includes(query.toLowerCase()));function edit(r){setEditing(r);setForm({...blank,...r});setOpen(true)}async function save(e){e.preventDefault();const payload={user_id:session.user.id,name:form.name.trim(),quantity:Number(form.quantity)||0,unit:form.unit,unit_cost:Number(form.unit_cost)||0,min_quantity:Number(form.min_quantity)||0};const res=editing?await supabase.from('ingredients').update(payload).eq('id',editing.id):await supabase.from('ingredients').insert(payload);if(res.error)notify(res.error.message);else{setOpen(false);notify(editing?'Ingrediente atualizado.':'Ingrediente adicionado.');load()}}async function remove(id){if(!confirm('Excluir este ingrediente?'))return;const{error}=await supabase.from('ingredients').delete().eq('id',id);if(error)notify(error.message);else load()}return <><div className="page-tools standard-page-tools"><div className="standard-search-wrap"><div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar ingrediente..."/></div></div><div className="standard-actions"><button className="primary" onClick={()=>{setEditing(null);setForm(blank);setOpen(true)}}><Plus size={17}/> Novo ingrediente</button></div></div><section className="panel pantry-page-panel"><div className="section-head"><div><h2>Minha despensa</h2><span>{rows.length} ingredientes cadastrados</span></div></div>{filtered.length?<div className="table-wrap"><table><thead><tr><th>Ingrediente</th><th>Estoque</th><th>Unidade</th><th>Custo unit.</th><th>Estoque mínimo</th><th>Status</th><th/></tr></thead><tbody>{filtered.map(r=>{const low=Number(r.quantity||0)<=Number(r.min_quantity||0);return <tr key={r.id}><td><b>{r.name}</b></td><td>{r.quantity}</td><td>{r.unit}</td><td>{money(r.unit_cost)}</td><td>{r.min_quantity}</td><td><span className={`pill ${low?'warning':'ok'}`}>{low?'Repor':'OK'}</span></td><td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button><button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button></div></td></tr>})}</tbody></table></div>:<Empty text="Sua despensa está vazia." action="Novo ingrediente" onClick={()=>setOpen(true)}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar ingrediente':'Novo ingrediente'}><form className="form" onSubmit={save}><Field label="Ingrediente"><input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Ex.: Chocolate"/></Field><div className="form-grid two"><Field label="Quantidade disponível"><input type="number" min="0" step="0.001" value={form.quantity} onChange={e=>setForm({...form,quantity:e.target.value})}/></Field><Field label="Unidade"><select value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})}>{UNITS.map(u=><option key={u}>{u}</option>)}</select></Field><Field label="Custo por unidade"><input type="number" min="0" step="0.0001" value={form.unit_cost} onChange={e=>setForm({...form,unit_cost:e.target.value})}/></Field><Field label="Estoque mínimo"><input type="number" min="0" step="0.001" value={form.min_quantity} onChange={e=>setForm({...form,min_quantity:e.target.value})}/></Field></div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar ingrediente</button></div></form></Modal>}</>}
+const blank={
+  name:'',
+  package_quantity:'',
+  package_unit:'g',
+  package_cost:'',
+  unit_family:'weight',
+  base_unit:'g',
+  quantity:'',
+  min_quantity:'0'
+};;const[rows,setRows]=useState([]),[open,setOpen]=useState(false),[editing,setEditing]=useState(null),[form,setForm]=useState(blank),[query,setQuery]=useState('');async function load(){const{data,error}=await supabase.from('ingredients').select('*').order('name');if(error)notify(error.message);else setRows(data||[])}useEffect(()=>{load()},[]);const filtered=rows.filter(r=>!query||r.name.toLowerCase().includes(query.toLowerCase()));function edit(r){setEditing(r);setForm({...blank,...r});setOpen(true)}async function save(e){
+  e.preventDefault();
+
+  const packageQuantity=Number(form.package_quantity)||0;
+  const packageCost=Number(form.package_cost)||0;
+
+  const conversion={
+    g:{family:'weight',base:'g',factor:1},
+    kg:{family:'weight',base:'g',factor:1000},
+    ml:{family:'volume',base:'ml',factor:1},
+    l:{family:'volume',base:'ml',factor:1000},
+    un:{family:'count',base:'un',factor:1},
+    pacote:{family:'other',base:'pacote',factor:1},
+    caixa:{family:'other',base:'caixa',factor:1}
+  };
+
+  const selected=conversion[form.package_unit]||{
+    family:'other',
+    base:form.package_unit||'un',
+    factor:1
+  };
+
+  const totalBaseQuantity=packageQuantity*selected.factor;
+
+  const baseUnitCost=
+    totalBaseQuantity>0
+      ? packageCost/totalBaseQuantity
+      : 0;
+
+  const payload={
+    user_id:session.user.id,
+    name:form.name.trim(),
+    package_quantity:packageQuantity,
+    package_unit:form.package_unit,
+    package_cost:packageCost,
+    unit_family:selected.family,
+    base_unit:selected.base,
+    base_unit_cost:baseUnitCost,
+    quantity:Number(form.quantity)||0,
+    min_quantity:Number(form.min_quantity)||0
+  };
+
+  const res=editing
+    ? await supabase
+        .from('ingredients')
+        .update(payload)
+        .eq('id',editing.id)
+    : await supabase
+        .from('ingredients')
+        .insert(payload);
+
+  if(res.error){
+    notify(res.error.message);
+  }else{
+    setOpen(false);
+    notify(editing?'Ingrediente atualizado.':'Ingrediente adicionado.');
+    load();
+  }
+}{if(!confirm('Excluir este ingrediente?'))return;const{error}=await supabase.from('ingredients').delete().eq('id',id);if(error)notify(error.message);else load()}return <><div className="page-tools standard-page-tools"><div className="standard-search-wrap"><div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar ingrediente..."/></div></div><div className="standard-actions"><button className="primary" onClick={()=>{setEditing(null);setForm(blank);setOpen(true)}}><Plus size={17}/> Novo ingrediente</button></div></div><section className="panel pantry-page-panel"><div className="section-head"><div><h2>Minha despensa</h2><span>{rows.length} ingredientes cadastrados</span></div></div>{filtered.length?<div className="table-wrap"><table><thead><tr><th>Ingrediente</th><th>Estoque</th><th>Unidade</th><th>Custo unit.</th><th>Estoque mínimo</th><th>Status</th><th/></tr></thead><tbody>{filtered.map(r=>{const low=Number(r.quantity||0)<=Number(r.min_quantity||0);return <tr key={r.id}><td><b>{r.name}</b></td><td>{r.quantity}</td><td>{r.unit}</td><td>{money(r.unit_cost)}</td><td>{r.min_quantity}</td><td><span className={`pill ${low?'warning':'ok'}`}>{low?'Repor':'OK'}</span></td><td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button><button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button></div></td></tr>})}</tbody></table></div>:<Empty text="Sua despensa está vazia." action="Novo ingrediente" onClick={()=>setOpen(true)}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar ingrediente':'Novo ingrediente'}><form className="form" onSubmit={save}><Field label="Ingrediente"><input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Ex.: Chocolate"/></Field><div className="form-grid two"><Field label="Quantidade disponível"><input type="number" min="0" step="0.001" value={form.quantity} onChange={e=>setForm({...form,quantity:e.target.value})}/></Field><Field label="Unidade"><select value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})}>{UNITS.map(u=><option key={u}>{u}</option>)}</select></Field><Field label="Custo por unidade"><input type="number" min="0" step="0.0001" value={form.unit_cost} onChange={e=>setForm({...form,unit_cost:e.target.value})}/></Field><Field label="Estoque mínimo"><input type="number" min="0" step="0.001" value={form.min_quantity} onChange={e=>setForm({...form,min_quantity:e.target.value})}/></Field></div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar ingrediente</button></div></form></Modal>}</>}
 
 function Marketing(){const[topic,setTopic]=useState(''),[type,setType]=useState('Reels'),[out,setOut]=useState('');function generate(){const t=topic.trim()||'meus doces';setOut(`IDEIA DE ${type.toUpperCase()}\n\nGancho: Você também deixa ${t} para a última hora?\n\nDesenvolvimento: mostre o produto em detalhes, explique o diferencial e apresente uma situação real da cliente.\n\nCTA: Me chama no WhatsApp e veja as opções disponíveis.\n\nDica: use uma foto ou vídeo real do seu produto para aumentar a conexão.`)}return <section className="marketing-layout"><div className="panel ai-panel"><div className="eyebrow">Assistente</div><h2>Marketing com IA</h2><p>Crie rascunhos para divulgar seus produtos e sua confeitaria.</p><Field label="O que você quer divulgar?"><textarea value={topic} onChange={e=>setTopic(e.target.value)} rows="5" placeholder="Ex.: quero vender mais bolos de aniversário"/></Field><Field label="Formato"><select value={type} onChange={e=>setType(e.target.value)}><option>Reels</option><option>Post</option><option>Carrossel</option><option>Stories</option><option>WhatsApp</option></select></Field><button className="primary wide" onClick={generate}><Sparkles size={16}/> Gerar ideia</button></div><div className="panel ai-output-panel"><div className="section-head"><div><h2>Seu rascunho</h2><span>Revise antes de publicar.</span></div></div>{out?<pre className="ai-output">{out}</pre>:<div className="ai-placeholder"><Sparkles size={28}/><p>Digite um objetivo ao lado e o Confeasy prepara uma primeira ideia.</p></div>}</div></section>}
 
