@@ -2189,7 +2189,93 @@ const blank={
     notify(editing?'Ingrediente atualizado.':'Ingrediente adicionado.');
     load();
   }
-}{if(!confirm('Excluir este ingrediente?'))return;const{error}=await supabase.from('ingredients').delete().eq('id',id);if(error)notify(error.message);else load()}return <><div className="page-tools standard-page-tools"><div className="standard-search-wrap"><div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar ingrediente..."/></div></div><div className="standard-actions"><button className="primary" onClick={()=>{setEditing(null);setForm(blank);setOpen(true)}}><Plus size={17}/> Novo ingrediente</button></div></div><section className="panel pantry-page-panel"><div className="section-head"><div><h2>Minha despensa</h2><span>{rows.length} ingredientes cadastrados</span></div></div>{filtered.length?<div className="table-wrap"><table><thead><tr><th>Ingrediente</th><th>Estoque</th><th>Unidade</th><th>Custo unit.</th><th>Estoque mínimo</th><th>Status</th><th/></tr></thead><tbody>{filtered.map(r=>{const low=Number(r.quantity||0)<=Number(r.min_quantity||0);return <tr key={r.id}><td><b>{r.name}</b></td><td>{r.quantity}</td><td>{r.unit}</td><td>{money(r.unit_cost)}</td><td>{r.min_quantity}</td><td><span className={`pill ${low?'warning':'ok'}`}>{low?'Repor':'OK'}</span></td><td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button><button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button></div></td></tr>})}</tbody></table></div>:<Empty text="Sua despensa está vazia." action="Novo ingrediente" onClick={()=>setOpen(true)}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar ingrediente':'Novo ingrediente'}><form className="form" onSubmit={save}><Field label="Ingrediente"><input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Ex.: Chocolate"/></Field><div className="form-grid two"><Field label="Quantidade disponível"><input type="number" min="0" step="0.001" value={form.quantity} onChange={e=>setForm({...form,quantity:e.target.value})}/></Field><Field label="Unidade"><select value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})}>{UNITS.map(u=><option key={u}>{u}</option>)}</select></Field><Field label="Custo por unidade"><input type="number" min="0" step="0.0001" value={form.unit_cost} onChange={e=>setForm({...form,unit_cost:e.target.value})}/></Field><Field label="Estoque mínimo"><input type="number" min="0" step="0.001" value={form.min_quantity} onChange={e=>setForm({...form,min_quantity:e.target.value})}/></Field></div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar ingrediente</button></div></form></Modal>}</>}
+}{if(!confirm('Excluir este ingrediente?'))return;const{error}=await supabase.from('ingredients').delete().eq('id',id);if(error)notify(error.message);else load()}return <><div className="page-tools standard-page-tools"><div className="standard-search-wrap"><div className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar ingrediente..."/></div></div><div className="standard-actions"><button className="primary" onClick={()=>{setEditing(null);setForm(blank);setOpen(true)}}><Plus size={17}/> Novo ingrediente</button></div></div><section className="panel pantry-page-panel"><div className="section-head"><div><h2>Minha despensa</h2><span>{rows.length} ingredientes cadastrados</span></div></div>{filtered.length?<div className="table-wrap"><table><thead><tr><th>Ingrediente</th><th>Estoque</th><th>Unidade</th><th>Custo unit.</th><th>Estoque mínimo</th><th>Status</th><th/></tr></thead><tbody>{filtered.map(r=>{const low=Number(r.quantity||0)<=Number(r.min_quantity||0);return <tr key={r.id}><td><b>{r.name}</b></td><td>{r.quantity}</td><td>{r.unit}</td><td>{money(r.unit_cost)}</td><td>{r.min_quantity}</td><td><span className={`pill ${low?'warning':'ok'}`}>{low?'Repor':'OK'}</span></td><td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button><button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button></div></td></tr>})}</tbody></table></div>:<Empty text="Sua despensa está vazia." action="Novo ingrediente" onClick={()=>setOpen(true)}/>}</section>{open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar ingrediente':'Novo ingrediente'}><form className="form" onSubmit={save}><Field label="Ingrediente"><input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Ex.: Chocolate"/></Field><div className="form-grid two">
+
+  <Field label="Quantidade da embalagem">
+    <input
+      type="number"
+      min="0"
+      step="0.001"
+      value={form.package_quantity}
+      onChange={e=>
+        setForm({
+          ...form,
+          package_quantity:e.target.value
+        })
+      }
+      placeholder="Ex.: 1"
+    />
+  </Field>
+
+  <Field label="Unidade da embalagem">
+    <select
+      value={form.package_unit}
+      onChange={e=>
+        setForm({
+          ...form,
+          package_unit:e.target.value
+        })
+      }
+    >
+      <option value="g">g — gramas</option>
+      <option value="kg">kg — quilos</option>
+      <option value="ml">ml — mililitros</option>
+      <option value="l">L — litros</option>
+      <option value="un">un — unidade</option>
+      <option value="pacote">pacote</option>
+      <option value="caixa">caixa</option>
+    </select>
+  </Field>
+
+  <Field label="Preço da embalagem">
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      value={form.package_cost}
+      onChange={e=>
+        setForm({
+          ...form,
+          package_cost:e.target.value
+        })
+      }
+      placeholder="R$ 0,00"
+    />
+  </Field>
+
+  <Field label="Estoque disponível">
+    <input
+      type="number"
+      min="0"
+      step="0.001"
+      value={form.quantity}
+      onChange={e=>
+        setForm({
+          ...form,
+          quantity:e.target.value
+        })
+      }
+      placeholder="Ex.: 2000"
+    />
+  </Field>
+
+  <Field label="Estoque mínimo">
+    <input
+      type="number"
+      min="0"
+      step="0.001"
+      value={form.min_quantity}
+      onChange={e=>
+        setForm({
+          ...form,
+          min_quantity:e.target.value
+        })
+      }
+      placeholder="Ex.: 500"
+    />
+  </Field>
+
+</div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar ingrediente</button></div></form></Modal>}</>}
 
 function Marketing(){const[topic,setTopic]=useState(''),[type,setType]=useState('Reels'),[out,setOut]=useState('');function generate(){const t=topic.trim()||'meus doces';setOut(`IDEIA DE ${type.toUpperCase()}\n\nGancho: Você também deixa ${t} para a última hora?\n\nDesenvolvimento: mostre o produto em detalhes, explique o diferencial e apresente uma situação real da cliente.\n\nCTA: Me chama no WhatsApp e veja as opções disponíveis.\n\nDica: use uma foto ou vídeo real do seu produto para aumentar a conexão.`)}return <section className="marketing-layout"><div className="panel ai-panel"><div className="eyebrow">Assistente</div><h2>Marketing com IA</h2><p>Crie rascunhos para divulgar seus produtos e sua confeitaria.</p><Field label="O que você quer divulgar?"><textarea value={topic} onChange={e=>setTopic(e.target.value)} rows="5" placeholder="Ex.: quero vender mais bolos de aniversário"/></Field><Field label="Formato"><select value={type} onChange={e=>setType(e.target.value)}><option>Reels</option><option>Post</option><option>Carrossel</option><option>Stories</option><option>WhatsApp</option></select></Field><button className="primary wide" onClick={generate}><Sparkles size={16}/> Gerar ideia</button></div><div className="panel ai-output-panel"><div className="section-head"><div><h2>Seu rascunho</h2><span>Revise antes de publicar.</span></div></div>{out?<pre className="ai-output">{out}</pre>:<div className="ai-placeholder"><Sparkles size={28}/><p>Digite um objetivo ao lado e o Confeasy prepara uma primeira ideia.</p></div>}</div></section>}
 
