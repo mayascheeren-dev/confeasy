@@ -1,93 +1,307 @@
--- CONFEASY — banco inicial
--- Execute este arquivo no SQL Editor do seu projeto Supabase.
+import { createClient } from "@supabase/supabase-js";
+import crypto from "node:crypto";
 
-create extension if not exists pgcrypto;
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseSecretKey =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const adminSecret = process.env.CONFEASY_ADMIN_SECRET;
 
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text unique,
-  full_name text default '',
-  business_name text default 'Minha Confeitaria',
-  active boolean not null default true,
-  expires_at date,
-  created_at timestamptz not null default now()
-);
+function json(res, status, body) {
+  res.status(status).json(body);
+}
 
-create table if not exists public.recipes (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  yield_units text,
-  cost numeric(12,2) not null default 0,
-  created_at timestamptz not null default now()
-);
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
 
-create table if not exists public.orders (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  client_name text not null,
-  item_name text not null,
-  delivery_date date,
-  value numeric(12,2) not null default 0,
-  status text not null default 'Pendente',
-  created_at timestamptz not null default now()
-);
+function generatePassword(length = 16) {
+  const alphabet =
+    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  let password = "";
 
-create table if not exists public.expenses (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  description text not null,
-  value numeric(12,2) not null default 0,
-  created_at timestamptz not null default now()
-);
+  while (password.length < length) {
+    const byte = crypto.randomBytes(1)[0];
 
-create table if not exists public.ingredients (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  quantity numeric(12,3) not null default 0,
-  unit text not null default 'un',
-  created_at timestamptz not null default now()
-);
+    if (byte < 250) {
+      password += alphabet[byte % alphabet.length];
+    }
+  }
 
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles(id,email,full_name,business_name)
-  values(new.id,new.email,coalesce(new.raw_user_meta_data->>'full_name',''),coalesce(new.raw_user_meta_data->>'business_name','Minha Confeitaria'))
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
+  return password;
+}
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created after insert on auth.users
-for each row execute procedure public.handle_new_user();
+function isoDateToday() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-alter table public.profiles enable row level security;
-alter table public.recipes enable row level security;
-alter table public.orders enable row level security;
-alter table public.expenses enable row level security;
-alter table public.ingredients enable row level security;
+function addDaysToDate(dateString, days) {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
 
--- Perfis: o próprio usuário pode ler/atualizar seu perfil.
-drop policy if exists "profiles_select_own" on public.profiles;
-create policy "profiles_select_own" on public.profiles for select to authenticated using (id = auth.uid());
-drop policy if exists "profiles_update_own" on public.profiles;
-create policy "profiles_update_own" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+  return date.toISOString().slice(0, 10);
+}
 
--- Dados do usuário: cada conta só acessa suas próprias linhas.
+function maxDate(a, b) {
+  return a >= b ? a : b;
+}
 
-drop policy if exists "recipes_all_own" on public.recipes;
-create policy "recipes_all_own" on public.recipes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+async function findUserByEmail(supabaseAdmin, email) {
+  let page = 1;
+  const perPage = 1000;
 
-drop policy if exists "orders_all_own" on public.orders;
-create policy "orders_all_own" on public.orders for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  while (true) {
+    const { data, error } =
+      await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage,
+      });
 
-drop policy if exists "expenses_all_own" on public.expenses;
-create policy "expenses_all_own" on public.expenses for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+    if (error) throw error;
 
-drop policy if exists "ingredients_all_own" on public.ingredients;
-create policy "ingredients_all_own" on public.ingredients for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+    const user = data.users.find(
+      (item) => normalizeEmail(item.email) === email
+    );
 
--- Criação automática de profile para novos usuários.
+    if (user) return user;
+
+    if (data.users.length < perPage) return null;
+
+    page += 1;
+  }
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+
+    return json(res, 405, {
+      error: "Método não permitido.",
+    });
+  }
+
+  if (
+    !adminSecret ||
+    req.headers["x-confeasy-admin-secret"] !== adminSecret
+  ) {
+    return json(res, 401, {
+      error: "Não autorizado.",
+    });
+  }
+
+  if (!supabaseUrl || !supabaseSecretKey) {
+    return json(res, 500, {
+      error:
+        "Configuração do Supabase ausente. Defina VITE_SUPABASE_URL e SUPABASE_SECRET_KEY.",
+    });
+  }
+
+  const email = normalizeEmail(req.body?.email);
+
+  const fullName = String(
+    req.body?.full_name || ""
+  ).trim();
+
+  const businessName =
+    String(
+      req.body?.business_name ||
+        "Minha Confeitaria"
+    ).trim() || "Minha Confeitaria";
+
+  const days = Number(req.body?.days);
+
+  if (!email || !email.includes("@")) {
+    return json(res, 400, {
+      error: "E-mail inválido.",
+    });
+  }
+
+  if (
+    !Number.isInteger(days) ||
+    ![30, 90, 365].includes(days)
+  ) {
+    return json(res, 400, {
+      error: "days deve ser 30, 90 ou 365.",
+    });
+  }
+
+  const supabaseAdmin = createClient(
+    supabaseUrl,
+    supabaseSecretKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+
+  try {
+    const existingUser =
+      await findUserByEmail(
+        supabaseAdmin,
+        email
+      );
+
+    const today = isoDateToday();
+
+    /*
+     * NOVO CLIENTE
+     */
+    if (!existingUser) {
+      const password =
+        generatePassword();
+
+      const {
+        data: created,
+        error: createError,
+      } =
+        await supabaseAdmin.auth.admin.createUser(
+          {
+            email,
+            password,
+            email_confirm: true,
+
+            user_metadata: {
+              full_name: fullName,
+              business_name:
+                businessName,
+            },
+          }
+        );
+
+      if (createError) {
+        throw createError;
+      }
+
+      const userId =
+        created.user.id;
+
+      const expiresAt =
+        addDaysToDate(
+          today,
+          days
+        );
+
+      const {
+        error: profileError,
+      } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          email,
+          full_name: fullName,
+          business_name:
+            businessName,
+          active: true,
+          expires_at:
+            expiresAt,
+        })
+        .eq("id", userId);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      return json(res, 201, {
+        ok: true,
+        created: true,
+        user_id: userId,
+        email,
+        password,
+        expires_at:
+          expiresAt,
+        days_added: days,
+      });
+    }
+
+    /*
+     * CLIENTE EXISTENTE
+     * Apenas estende o acesso.
+     */
+    const userId =
+      existingUser.id;
+
+    const {
+      data: profile,
+      error: profileReadError,
+    } = await supabaseAdmin
+      .from("profiles")
+      .select(
+        "expires_at, full_name, business_name"
+      )
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileReadError) {
+      throw profileReadError;
+    }
+
+    const currentExpiry =
+      profile?.expires_at ||
+      today;
+
+    const baseDate =
+      maxDate(
+        currentExpiry,
+        today
+      );
+
+    const expiresAt =
+      addDaysToDate(
+        baseDate,
+        days
+      );
+
+    const {
+      error: profileUpdateError,
+    } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        email,
+        full_name:
+          fullName ||
+          profile?.full_name ||
+          "",
+        business_name:
+          businessName ||
+          profile?.business_name ||
+          "Minha Confeitaria",
+        active: true,
+        expires_at:
+          expiresAt,
+      })
+      .eq("id", userId);
+
+    if (profileUpdateError) {
+      throw profileUpdateError;
+    }
+
+    return json(res, 200, {
+      ok: true,
+      created: false,
+      user_id: userId,
+      email,
+      expires_at:
+        expiresAt,
+      days_added: days,
+
+      /*
+       * Não alteramos a senha
+       * de um cliente existente.
+       */
+      password: null,
+    });
+  } catch (error) {
+    console.error(
+      "Confeasy provision-user error:",
+      error
+    );
+
+    return json(res, 500, {
+      error:
+        "Não foi possível provisionar o usuário.",
+      detail:
+        error?.message ||
+        "Erro desconhecido.",
+    });
+  }
+}
