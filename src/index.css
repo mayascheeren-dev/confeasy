@@ -1497,3 +1497,59 @@ tbody tr:hover td {
     font-size: 12px !important;
   }
 }
+/* =========================================================
+   CONFEASY — CAMPOS DE DIGITAÇÃO DA CALCULADORA
+   Fundo branco + texto preto
+========================================================= */
+
+.labor-panel input,
+.labor-panel select,
+.labor-panel textarea,
+.standard-page-tools input,
+.standard-page-tools select,
+.calculator-modal input,
+.calculator-modal select,
+.calculator-modal textarea,
+.form input,
+.form select,
+.form textarea {
+  background: #ffffff !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  border: 1px solid #d7d7d7 !important;
+  box-shadow: none !important;
+}
+
+.labor-panel input::placeholder,
+.labor-panel textarea::placeholder,
+.standard-page-tools input::placeholder,
+.form input::placeholder,
+.form textarea::placeholder {
+  color: #777777 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #777777 !important;
+}
+
+.labor-panel input:focus,
+.labor-panel select:focus,
+.labor-panel textarea:focus,
+.standard-page-tools input:focus,
+.standard-page-tools select:focus,
+.calculator-modal input:focus,
+.calculator-modal select:focus,
+.calculator-modal textarea:focus,
+.form input:focus,
+.form select:focus,
+.form textarea:focus {
+  border-color: #b6d900 !important;
+  box-shadow: 0 0 0 3px rgba(215,255,17,.15) !important;
+  outline: none !important;
+}
+
+.labor-panel select option,
+.standard-page-tools select option,
+.calculator-modal select option,
+.form select option {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
