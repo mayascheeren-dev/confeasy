@@ -1,6 +1,3 @@
-// CONFEASY — APP.JSX COMPLETO
-// Substituição integral do arquivo src/App.jsx
-
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
@@ -612,7 +609,38 @@ function Recipes({session,notify,profile,setProfile}){
     else load();
   }
 
-  const filtered=rows.filter(r=>
+  // O custo exibido na lista é recalculado com os preços ATUAIS da Despensa.
+  // A receita continua vinculada aos ingredientes por ingredient_id.
+  // Assim, alterar o preço na Despensa atualiza custo total, custo por unidade
+  // e preço sugerido sem precisar editar/salvar a receita novamente.
+  const liveRows=useMemo(()=>rows.map(recipe=>{
+    const ingredientTotal=(recipe.recipe_ingredients||[]).reduce(
+      (sum,item)=>sum+ingredientCost(item),0
+    );
+
+    const prepMinutes=Math.max(Number(recipe.prep_time_minutes)||0,0);
+    const laborCost=(prepMinutes/60)*hourlyRate;
+    const totalCost=ingredientTotal+laborCost;
+
+    const yieldAmount=Math.max(Number(recipe.yield_amount)||0,0);
+    const unitCost=yieldAmount>0?totalCost/yieldAmount:0;
+
+    const margin=clamp(recipe.desired_margin,0,99.99);
+    const suggestedPrice=unitCost>0
+      ? unitCost/(1-margin/100)
+      : 0;
+
+    return {
+      ...recipe,
+      ingredient_cost:ingredientTotal,
+      labor_cost:laborCost,
+      cost:totalCost,
+      unit_cost:unitCost,
+      suggested_price:suggestedPrice
+    };
+  }),[rows,ingredientsCatalog,hourlyRate]);
+
+  const filtered=liveRows.filter(r=>
     (!query||r.name.toLowerCase().includes(query.toLowerCase())) &&
     (category==='Todas'||r.category===category)
   );
@@ -1224,4 +1252,3 @@ function Modal({open,close,title,children}){
     </div>
   </div>;
 }
-export default App;
