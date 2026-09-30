@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import './index.css';
-
+import './responsive-orders-pantry.css';
 const EMPTY_PROFILE = { full_name: '', business_name: 'Minha Confeitaria', email: '', expires_at: null, active: true, phone: '', instagram: '', city: '', address: '', logo_url: '' };
 const CATEGORIES = ['Bolos','Doces','Tortas','Salgados','Cookies','Brownies','Sobremesas','Massas','Outros'];
 const ORDER_STATUS = ['Pendente','Confirmado','Pago','Em produção','Pronto','Entregue','Cancelado'];
