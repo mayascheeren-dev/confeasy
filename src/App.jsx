@@ -520,7 +520,40 @@ function Recipes({session,notify,profile,setProfile}){
         /* ==================================================
            CALCULADORA
         ================================================== */
+/* ==================================================
+   CAMPOS DA CALCULADORA — FUNDO BRANCO + TEXTO PRETO
+================================================== */
 
+.calculator-tools .search-box input,
+.calculator-actions select,
+.labor-panel input{
+  background:#ffffff!important;
+  color:#111111!important;
+  -webkit-text-fill-color:#111111!important;
+  border:1px solid #d7d7d7!important;
+  box-shadow:none!important;
+}
+
+.calculator-tools .search-box input::placeholder,
+.labor-panel input::placeholder{
+  color:#777777!important;
+  opacity:1!important;
+  -webkit-text-fill-color:#777777!important;
+}
+
+.calculator-tools .search-box input:focus,
+.calculator-actions select:focus,
+.labor-panel input:focus{
+  border-color:#b6d900!important;
+  box-shadow:0 0 0 3px rgba(215,255,17,.15)!important;
+  outline:none!important;
+}
+
+.calculator-actions select,
+.calculator-actions option{
+  color:#111111!important;
+  background:#ffffff!important;
+}
         .calculator-tools{
           display:grid!important;
           grid-template-columns:minmax(0,1fr) auto;
