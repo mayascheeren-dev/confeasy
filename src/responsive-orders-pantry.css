@@ -98,3 +98,110 @@
     font-size: 13px !important;
   }
 }
+
+
+/* PEDIDOS — visual mobile em cartões, sem colunas cortadas */
+.orders-mobile-list {
+  display: none;
+}
+
+.order-mobile-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255,255,255,.025);
+  margin-top: 12px;
+}
+
+.order-mobile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-mobile-top > div {
+  min-width: 0;
+}
+
+.order-mobile-top strong,
+.order-mobile-top small {
+  display: block;
+}
+
+.order-mobile-top strong {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.order-mobile-top small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.order-mobile-product {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.order-mobile-meta {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.order-mobile-meta div {
+  min-width: 0;
+}
+
+.order-mobile-meta small,
+.order-mobile-meta strong {
+  display: block;
+}
+
+.order-mobile-meta small {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.order-mobile-meta strong {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.order-mobile-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.order-mobile-actions button {
+  min-height: 40px;
+  justify-content: center;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .orders-table-desktop {
+    display: none !important;
+  }
+
+  .orders-mobile-list {
+    display: block;
+  }
+
+  .orders-page-panel {
+    overflow: hidden;
+  }
+}
