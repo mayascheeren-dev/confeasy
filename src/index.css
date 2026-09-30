@@ -1287,3 +1287,64 @@ tbody tr:hover td {
     left: 7px;
   }
 }
+/* CONFEASY — correção responsiva do Resumo da Operação */
+
+.dashboard-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1050px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-grid .mini-card {
+    min-height: 105px !important;
+    padding: 14px !important;
+  }
+
+  .dashboard-grid .mini-card b {
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-grid .mini-card {
+    min-height: 98px !important;
+    padding: 11px !important;
+    gap: 9px !important;
+    grid-template-columns: 34px minmax(0, 1fr) 12px !important;
+  }
+
+  .dashboard-grid .mini-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+  }
+
+  .dashboard-grid .mini-card b {
+    font-size: 16px !important;
+  }
+
+  .dashboard-grid .mini-card span {
+    font-size: 10px !important;
+  }
+
+  .dashboard-grid .mini-card small {
+    font-size: 9px !important;
+  }
+}
