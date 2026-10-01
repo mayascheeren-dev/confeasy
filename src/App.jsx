@@ -608,6 +608,10 @@ function LandingPage(){
 
 
 function App(){
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+  if(path !== '/app') return <LandingPage/>;
+
   const [session,setSession]=useState(null);
   const [profile,setProfile]=useState(EMPTY_PROFILE);
   const [booting,setBooting]=useState(true);
