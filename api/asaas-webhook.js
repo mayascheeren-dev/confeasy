@@ -11,9 +11,9 @@ const adminSecret = process.env.CONFEASY_ADMIN_SECRET;
 const asaasBaseUrl =
   process.env.ASAAS_API_BASE_URL || "https://api.asaas.com/v3";
 
-const paymentLink30 = process.env.ASAAS_PAYMENT_LINK_30D;
-const paymentLink90 = process.env.ASAAS_PAYMENT_LINK_90D;
-const paymentLink365 = process.env.ASAAS_PAYMENT_LINK_365D;
+const paymentLink30 = "4653667";
+const paymentLink90 = "4653735";
+const paymentLink365 = "4653776";
 
 function json(res, status, body) {
   res.status(status).json(body);
