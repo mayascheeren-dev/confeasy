@@ -49,6 +49,564 @@ function convertToBase(quantity,unit){
   return (Number(quantity)||0)*(info?.factor||1);
 }
 
+function LandingPage(){
+  const plans = [
+    {
+      days:'30 dias',
+      price:'R$ 19,90',
+      description:'Para começar a organizar sua confeitaria.',
+      link:'https://www.asaas.com/000/c/tqgg1c884dx1h4j1'
+    },
+    {
+      days:'90 dias',
+      price:'R$ 44,90',
+      description:'Mais tempo para transformar sua rotina.',
+      link:'https://www.asaas.com/000/c/spq8l5cw7qblvjes',
+      featured:true
+    },
+    {
+      days:'365 dias',
+      price:'R$ 97,00',
+      description:'Um ano inteiro de organização e controle.',
+      link:'https://www.asaas.com/000/c/ggrrovd9q8ozwprr'
+    }
+  ];
+
+  const features = [
+    ['Pedidos','Organize clientes, produtos, datas, valores e status.'],
+    ['Receitas','Cadastre receitas e acompanhe custos e preços.'],
+    ['Despensa','Controle ingredientes, estoque mínimo e custos.'],
+    ['Finanças','Acompanhe vendas, despesas e resultado.'],
+    ['Marketing com IA','Crie ideias de conteúdo para divulgar seus produtos.'],
+    ['Meu negócio','Mantenha as informações da sua confeitaria organizadas.']
+  ];
+
+  return (
+    <div style={{
+      minHeight:'100vh',
+      background:'#08090a',
+      color:'#f7f7f5',
+      fontFamily:"Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+      overflowX:'hidden'
+    }}>
+
+      <header style={{
+        position:'sticky',
+        top:0,
+        zIndex:20,
+        background:'rgba(8,9,10,.88)',
+        backdropFilter:'blur(18px)',
+        borderBottom:'1px solid rgba(255,255,255,.07)'
+      }}>
+        <div style={{
+          maxWidth:1180,
+          margin:'0 auto',
+          padding:'18px 24px',
+          display:'flex',
+          alignItems:'center',
+          justifyContent:'space-between'
+        }}>
+          <div style={{
+            fontSize:25,
+            fontWeight:800,
+            letterSpacing:'-1.5px'
+          }}>
+            confeasy<span style={{color:'#d7ff11'}}>.</span>
+          </div>
+
+          <a
+            href="/app"
+            style={{
+              color:'#f7f7f5',
+              textDecoration:'none',
+              fontSize:13,
+              fontWeight:700,
+              padding:'10px 16px',
+              border:'1px solid rgba(255,255,255,.12)',
+              borderRadius:10
+            }}
+          >
+            Já sou cliente
+          </a>
+        </div>
+      </header>
+
+      <main>
+
+        <section style={{
+          maxWidth:1180,
+          margin:'0 auto',
+          padding:'95px 24px 80px',
+          textAlign:'center'
+        }}>
+          <div style={{
+            display:'inline-flex',
+            alignItems:'center',
+            gap:7,
+            padding:'8px 13px',
+            borderRadius:999,
+            background:'rgba(215,255,17,.08)',
+            border:'1px solid rgba(215,255,17,.16)',
+            color:'#d7ff11',
+            fontSize:11,
+            fontWeight:700,
+            letterSpacing:'.08em',
+            textTransform:'uppercase'
+          }}>
+            Sua confeitaria, mais organizada
+          </div>
+
+          <h1 style={{
+            maxWidth:850,
+            margin:'24px auto 18px',
+            fontSize:'clamp(42px,7vw,78px)',
+            lineHeight:.98,
+            letterSpacing:'-5px',
+            fontWeight:800
+          }}>
+            Menos bagunça.
+            <br/>
+            <span style={{color:'#d7ff11'}}>Mais controle.</span>
+          </h1>
+
+          <p style={{
+            maxWidth:650,
+            margin:'0 auto',
+            color:'#969a98',
+            fontSize:17,
+            lineHeight:1.7
+          }}>
+            O Confeasy reúne pedidos, receitas, ingredientes,
+            despesas e organização do seu negócio em um só lugar.
+          </p>
+
+          <div style={{
+            marginTop:32,
+            display:'flex',
+            justifyContent:'center',
+            gap:10,
+            flexWrap:'wrap'
+          }}>
+            <a
+              href="#planos"
+              style={{
+                display:'inline-flex',
+                alignItems:'center',
+                justifyContent:'center',
+                minHeight:50,
+                padding:'0 24px',
+                borderRadius:11,
+                background:'#d7ff11',
+                color:'#090a09',
+                textDecoration:'none',
+                fontSize:13,
+                fontWeight:800
+              }}
+            >
+              Começar agora →
+            </a>
+
+            <a
+              href="#recursos"
+              style={{
+                display:'inline-flex',
+                alignItems:'center',
+                justifyContent:'center',
+                minHeight:50,
+                padding:'0 24px',
+                borderRadius:11,
+                background:'rgba(255,255,255,.05)',
+                border:'1px solid rgba(255,255,255,.10)',
+                color:'#fff',
+                textDecoration:'none',
+                fontSize:13,
+                fontWeight:700
+              }}
+            >
+              Conhecer o Confeasy
+            </a>
+          </div>
+        </section>
+
+        <section id="recursos" style={{
+          maxWidth:1180,
+          margin:'0 auto',
+          padding:'20px 24px 90px'
+        }}>
+          <div style={{
+            textAlign:'center',
+            marginBottom:38
+          }}>
+            <div style={{
+              color:'#d7ff11',
+              fontSize:11,
+              fontWeight:700,
+              letterSpacing:'.12em',
+              textTransform:'uppercase'
+            }}>
+              Tudo em um só lugar
+            </div>
+
+            <h2 style={{
+              margin:'10px 0 8px',
+              fontSize:'clamp(28px,4vw,42px)',
+              letterSpacing:'-2px'
+            }}>
+              Feito para a rotina da confeiteira.
+            </h2>
+
+            <p style={{
+              margin:0,
+              color:'#969a98',
+              fontSize:14
+            }}>
+              Ferramentas simples para você cuidar melhor do seu negócio.
+            </p>
+          </div>
+
+          <div style={{
+            display:'grid',
+            gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',
+            gap:12
+          }}>
+            {features.map(([title,text])=>(
+              <div
+                key={title}
+                style={{
+                  padding:23,
+                  background:'#111314',
+                  border:'1px solid rgba(255,255,255,.08)',
+                  borderRadius:17
+                }}
+              >
+                <div style={{
+                  width:38,
+                  height:38,
+                  display:'grid',
+                  placeItems:'center',
+                  borderRadius:11,
+                  marginBottom:17,
+                  background:'rgba(215,255,17,.09)',
+                  color:'#d7ff11',
+                  fontWeight:800
+                }}>
+                  ✓
+                </div>
+
+                <h3 style={{
+                  margin:'0 0 7px',
+                  fontSize:16
+                }}>
+                  {title}
+                </h3>
+
+                <p style={{
+                  margin:0,
+                  color:'#969a98',
+                  fontSize:12,
+                  lineHeight:1.65
+                }}>
+                  {text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section style={{
+          maxWidth:1180,
+          margin:'0 auto',
+          padding:'20px 24px 100px'
+        }}>
+          <div style={{
+            padding:'35px',
+            borderRadius:22,
+            background:'linear-gradient(135deg,#111414,#0d0f10)',
+            border:'1px solid rgba(255,255,255,.08)',
+            display:'grid',
+            gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',
+            gap:30,
+            alignItems:'center'
+          }}>
+            <div>
+              <div style={{
+                color:'#d7ff11',
+                fontSize:11,
+                fontWeight:700,
+                letterSpacing:'.12em',
+                textTransform:'uppercase'
+              }}>
+                Mais organização
+              </div>
+
+              <h2 style={{
+                margin:'10px 0 12px',
+                fontSize:'clamp(28px,4vw,42px)',
+                letterSpacing:'-2px'
+              }}>
+                Você cuida dos seus doces.
+                <br/>
+                O Confeasy cuida da organização.
+              </h2>
+
+              <p style={{
+                margin:0,
+                color:'#969a98',
+                fontSize:13,
+                lineHeight:1.7
+              }}>
+                Tenha uma visão mais clara da sua produção,
+                dos seus pedidos e dos números da sua confeitaria.
+              </p>
+            </div>
+
+            <div style={{
+              padding:25,
+              borderRadius:18,
+              background:'rgba(215,255,17,.055)',
+              border:'1px solid rgba(215,255,17,.12)'
+            }}>
+              <div style={{
+                color:'#969a98',
+                fontSize:11,
+                marginBottom:8
+              }}>
+                Comece hoje
+              </div>
+
+              <div style={{
+                fontSize:32,
+                fontWeight:800,
+                letterSpacing:'-1px'
+              }}>
+                A partir de
+                <span style={{color:'#d7ff11'}}> R$ 19,90</span>
+              </div>
+
+              <a
+                href="#planos"
+                style={{
+                  display:'flex',
+                  alignItems:'center',
+                  justifyContent:'center',
+                  minHeight:46,
+                  marginTop:18,
+                  borderRadius:10,
+                  background:'#d7ff11',
+                  color:'#090a09',
+                  textDecoration:'none',
+                  fontSize:13,
+                  fontWeight:800
+                }}
+              >
+                Ver planos
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section id="planos" style={{
+          maxWidth:1180,
+          margin:'0 auto',
+          padding:'20px 24px 110px'
+        }}>
+          <div style={{
+            textAlign:'center',
+            marginBottom:38
+          }}>
+            <div style={{
+              color:'#d7ff11',
+              fontSize:11,
+              fontWeight:700,
+              letterSpacing:'.12em',
+              textTransform:'uppercase'
+            }}>
+              Escolha seu acesso
+            </div>
+
+            <h2 style={{
+              margin:'10px 0 8px',
+              fontSize:'clamp(30px,4vw,44px)',
+              letterSpacing:'-2px'
+            }}>
+              Comece pelo plano que combina com você.
+            </h2>
+
+            <p style={{
+              margin:0,
+              color:'#969a98',
+              fontSize:14
+            }}>
+              Pagamento seguro pelo Asaas.
+            </p>
+          </div>
+
+          <div style={{
+            display:'grid',
+            gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',
+            gap:14
+          }}>
+            {plans.map(plan=>(
+              <div
+                key={plan.days}
+                style={{
+                  position:'relative',
+                  padding:25,
+                  borderRadius:19,
+                  background:plan.featured?'linear-gradient(145deg,#171b13,#111314)':'#111314',
+                  border:plan.featured
+                    ?'1px solid rgba(215,255,17,.38)'
+                    :'1px solid rgba(255,255,255,.08)',
+                  boxShadow:plan.featured
+                    ?'0 20px 70px rgba(215,255,17,.07)'
+                    :'none'
+                }}
+              >
+                {plan.featured&&(
+                  <div style={{
+                    position:'absolute',
+                    top:16,
+                    right:16,
+                    padding:'5px 9px',
+                    borderRadius:999,
+                    background:'#d7ff11',
+                    color:'#090a09',
+                    fontSize:9,
+                    fontWeight:800,
+                    textTransform:'uppercase'
+                  }}>
+                    Mais escolhido
+                  </div>
+                )}
+
+                <div style={{
+                  color:'#969a98',
+                  fontSize:12,
+                  fontWeight:700
+                }}>
+                  {plan.days}
+                </div>
+
+                <div style={{
+                  marginTop:12,
+                  fontSize:34,
+                  fontWeight:800,
+                  letterSpacing:'-1.5px'
+                }}>
+                  {plan.price}
+                </div>
+
+                <p style={{
+                  minHeight:43,
+                  margin:'10px 0 20px',
+                  color:'#969a98',
+                  fontSize:12,
+                  lineHeight:1.55
+                }}>
+                  {plan.description}
+                </p>
+
+                <div style={{
+                  display:'grid',
+                  gap:9,
+                  marginBottom:22,
+                  color:'#c9cdca',
+                  fontSize:11
+                }}>
+                  <span>✓ Acesso ao Confeasy</span>
+                  <span>✓ Pedidos e receitas</span>
+                  <span>✓ Controle de ingredientes</span>
+                  <span>✓ Finanças e organização</span>
+                </div>
+
+                <a
+                  href={plan.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center',
+                    minHeight:48,
+                    borderRadius:10,
+                    background:'#d7ff11',
+                    color:'#090a09',
+                    textDecoration:'none',
+                    fontSize:13,
+                    fontWeight:800
+                  }}
+                >
+                  Quero este plano →
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section style={{
+          textAlign:'center',
+          padding:'30px 24px 80px'
+        }}>
+          <div style={{
+            maxWidth:700,
+            margin:'0 auto',
+            padding:'55px 25px',
+            borderTop:'1px solid rgba(255,255,255,.07)'
+          }}>
+            <h2 style={{
+              margin:'0 0 12px',
+              fontSize:'clamp(28px,4vw,42px)',
+              letterSpacing:'-2px'
+            }}>
+              Sua confeitaria merece mais organização.
+            </h2>
+
+            <p style={{
+              margin:'0 0 25px',
+              color:'#969a98',
+              fontSize:13
+            }}>
+              Escolha seu plano e comece a usar o Confeasy.
+            </p>
+
+            <a
+              href="#planos"
+              style={{
+                display:'inline-flex',
+                alignItems:'center',
+                justifyContent:'center',
+                minHeight:48,
+                padding:'0 24px',
+                borderRadius:10,
+                background:'#d7ff11',
+                color:'#090a09',
+                textDecoration:'none',
+                fontSize:13,
+                fontWeight:800
+              }}
+            >
+              Começar agora →
+            </a>
+          </div>
+        </section>
+
+      </main>
+
+      <footer style={{
+        padding:'25px 24px',
+        borderTop:'1px solid rgba(255,255,255,.07)',
+        textAlign:'center',
+        color:'#686d6b',
+        fontSize:10
+      }}>
+        © {new Date().getFullYear()} Confeasy. Organização para sua confeitaria.
+      </footer>
+    </div>
+  );
+}
+
+
+
 function App(){
   const [session,setSession]=useState(null);
   const [profile,setProfile]=useState(EMPTY_PROFILE);
