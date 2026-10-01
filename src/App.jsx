@@ -51,558 +51,74 @@ function convertToBase(quantity,unit){
 
 function LandingPage(){
   const plans = [
-    {
-      days:'30 dias',
-      price:'R$ 19,90',
-      description:'Para começar a organizar sua confeitaria.',
-      link:'https://www.asaas.com/000/c/tqgg1c884dx1h4j1'
-    },
-    {
-      days:'90 dias',
-      price:'R$ 44,90',
-      description:'Mais tempo para transformar sua rotina.',
-      link:'https://www.asaas.com/000/c/spq8l5cw7qblvjes',
-      featured:true
-    },
-    {
-      days:'365 dias',
-      price:'R$ 97,00',
-      description:'Um ano inteiro de organização e controle.',
-      link:'https://www.asaas.com/000/c/ggrrovd9q8ozwprr'
-    }
+    {days:'30 DIAS',price:'R$ 19,90',description:'Comece a organizar sua confeitaria agora.',cta:'COMEÇAR POR R$ 19,90',link:'https://www.asaas.com/000/c/tqgg1c884dx1h4j1'},
+    {days:'90 DIAS',price:'R$ 44,90',description:'Mais tempo para colocar sua rotina em ordem.',cta:'QUERO 90 DIAS',link:'https://www.asaas.com/000/c/spq8l5cw7qblvjes',featured:true},
+    {days:'365 DIAS',price:'R$ 97,00',description:'Um ano inteiro para cuidar melhor do seu negócio.',cta:'QUERO 1 ANO',link:'https://www.asaas.com/000/c/ggrrovd9q8ozwprr'}
   ];
 
   const features = [
-    ['Pedidos','Organize clientes, produtos, datas, valores e status.'],
-    ['Receitas','Cadastre receitas e acompanhe custos e preços.'],
-    ['Despensa','Controle ingredientes, estoque mínimo e custos.'],
-    ['Finanças','Acompanhe vendas, despesas e resultado.'],
-    ['Marketing com IA','Crie ideias de conteúdo para divulgar seus produtos.'],
-    ['Meu negócio','Mantenha as informações da sua confeitaria organizadas.']
+    {icon:<ClipboardList size={21}/>,title:'Pedidos',text:'Clientes, produtos, datas, valores e status em um só lugar.'},
+    {icon:<CakeSlice size={21}/>,title:'Receitas',text:'Cadastre receitas, acompanhe custos e organize sua produção.'},
+    {icon:<Package size={21}/>,title:'Despensa',text:'Controle ingredientes, estoque mínimo e custos dos insumos.'},
+    {icon:<CircleDollarSign size={21}/>,title:'Finanças',text:'Visualize vendas, despesas e o resultado registrado.'},
+    {icon:<Sparkles size={21}/>,title:'Marketing com IA',text:'Tenha ideias de conteúdo para divulgar seus produtos.'},
+    {icon:<UserRound size={21}/>,title:'Meu negócio',text:'Deixe as informações da sua confeitaria organizadas.'}
   ];
 
-  return (
-    <div style={{
-      minHeight:'100vh',
-      background:'#08090a',
-      color:'#f7f7f5',
-      fontFamily:"Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-      overflowX:'hidden'
-    }}>
+  const MiniScreen=({type='dashboard'})=>{
+    if(type==='orders') return <div className="lp-mini-screen"><div className="lp-mini-top"><span></span><b>Pedidos</b></div><h4>Agenda de pedidos</h4><div className="lp-order"><b>Maria • Bolo</b><strong>R$ 180</strong><small>18/10 • Confirmado</small></div><div className="lp-order"><b>Ana • Doces</b><strong>R$ 95</strong><small>19/10 • Pago</small></div><div className="lp-order"><b>Julia • Kit festa</b><strong>R$ 240</strong><small>21/10 • Em produção</small></div></div>;
+    if(type==='recipes') return <div className="lp-mini-screen"><div className="lp-mini-top"><span></span><b>Receitas</b></div><h4>Minhas receitas</h4><div className="lp-recipe">🍰 <b>Bolo de chocolate</b><small>Custo R$ 42,80</small></div><div className="lp-recipe">🧁 <b>Cupcake de baunilha</b><small>Custo R$ 18,40</small></div><div className="lp-recipe">🍪 <b>Cookies</b><small>Custo R$ 12,90</small></div></div>;
+    return <div className="lp-mini-screen"><div className="lp-mini-top"><span></span><b>Dashboard</b></div><h4>Bom dia! 👋</h4><div className="lp-stats"><div><small>Pedidos</small><strong>24</strong><em>+12%</em></div><div><small>Vendas</small><strong>R$ 2.480</strong><em>este mês</em></div></div><div className="lp-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div className="lp-mini-list"><span>● Bolo de aniversário <b>R$ 180</b></span><span>● Doces personalizados <b>R$ 95</b></span><span>● Kit festa <b>R$ 240</b></span></div></div>;
+  };
 
-      <header style={{
-        position:'sticky',
-        top:0,
-        zIndex:20,
-        background:'rgba(8,9,10,.88)',
-        backdropFilter:'blur(18px)',
-        borderBottom:'1px solid rgba(255,255,255,.07)'
-      }}>
-        <div style={{
-          maxWidth:1180,
-          margin:'0 auto',
-          padding:'18px 24px',
-          display:'flex',
-          alignItems:'center',
-          justifyContent:'space-between'
-        }}>
-          <div style={{
-            fontSize:25,
-            fontWeight:800,
-            letterSpacing:'-1.5px'
-          }}>
-            confeasy<span style={{color:'#d7ff11'}}>.</span>
-          </div>
+  return <div className="lp">
+    <header className="lp-header"><div className="lp-container lp-nav">
+      <a href="/" className="lp-logo">confeasy<span>.</span></a>
+      <nav className="lp-nav-links"><a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="#planos">Planos</a></nav>
+      <a href="/app" className="lp-login">Já sou cliente <ArrowRight size={14}/></a>
+    </div></header>
 
-          <a
-            href="/app"
-            style={{
-              color:'#f7f7f5',
-              textDecoration:'none',
-              fontSize:13,
-              fontWeight:700,
-              padding:'10px 16px',
-              border:'1px solid rgba(255,255,255,.12)',
-              borderRadius:10
-            }}
-          >
-            Já sou cliente
-          </a>
+    <main>
+      <section className="lp-hero"><div className="lp-container lp-hero-grid">
+        <div className="lp-hero-copy">
+          <div className="lp-eyebrow">Feito para a rotina da confeiteira</div>
+          <h1>Sua confeitaria.<br/><em>Em um só lugar.</em></h1>
+          <p>Pedidos, receitas, ingredientes, finanças e marketing com IA reunidos em uma única ferramenta para deixar sua rotina mais organizada.</p>
+          <div className="lp-actions"><a className="lp-btn lp-btn-main" href="#planos">Quero começar agora <ArrowRight size={15}/></a><a className="lp-btn lp-btn-ghost" href="#recursos">Conhecer o Confeasy</a></div>
+          <div className="lp-proof"><span><CheckCircle2 size={13}/><b>6</b> áreas integradas</span><span><CheckCircle2 size={13}/>Celular e computador</span></div>
         </div>
-      </header>
 
-      <main>
+        <div className="lp-device-stage"><div className="lp-glow"></div>
+          <div className="lp-laptop"><div className="lp-laptop-screen"><div className="lp-app-window">
+            <aside className="lp-sidebar"><div className="lp-side-logo">confeasy<span>.</span></div><div className="lp-side-item active">● Dashboard</div><div className="lp-side-item">▣ Pedidos</div><div className="lp-side-item">◉ Receitas</div><div className="lp-side-item">□ Despensa</div><div className="lp-side-item">$ Finanças</div><div className="lp-side-item">✦ Marketing IA</div></aside>
+            <div className="lp-app-main"><div className="lp-app-head"><strong>Visão geral</strong><span>Minha Confeitaria</span></div><div className="lp-app-cards"><div><small>Pedidos</small><b>24</b></div><div><small>Vendas</small><b>R$ 2.480</b></div><div><small>Resultado</small><b className="lime">R$ 1.540</b></div></div><div className="lp-app-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div className="lp-app-list"><span>● Bolo de aniversário <b>R$ 180</b></span><span>● Doces personalizados <b>R$ 95</b></span><span>● Kit festa <b>R$ 240</b></span></div></div>
+          </div></div><div className="lp-laptop-base"></div></div>
 
-        <section style={{
-          maxWidth:1180,
-          margin:'0 auto',
-          padding:'95px 24px 80px',
-          textAlign:'center'
-        }}>
-          <div style={{
-            display:'inline-flex',
-            alignItems:'center',
-            gap:7,
-            padding:'8px 13px',
-            borderRadius:999,
-            background:'rgba(215,255,17,.08)',
-            border:'1px solid rgba(215,255,17,.16)',
-            color:'#d7ff11',
-            fontSize:11,
-            fontWeight:700,
-            letterSpacing:'.08em',
-            textTransform:'uppercase'
-          }}>
-            Sua confeitaria, mais organizada
-          </div>
+          <div className="lp-phone"><div className="lp-notch"></div><div className="lp-phone-screen"><div className="lp-phone-logo">confeasy<span>.</span></div><div className="lp-phone-card"><small>Pedidos do mês</small><b>24 pedidos</b><i></i></div><div className="lp-phone-card"><small>Vendas</small><b className="lime">R$ 2.480,00</b></div><div className="lp-phone-card"><small>Próxima entrega</small><b>Bolo de aniversário</b></div><div className="lp-phone-card"><small>Estoque</small><b>8 itens para repor</b></div></div></div>
+        </div>
+      </div></section>
 
-          <h1 style={{
-            maxWidth:850,
-            margin:'24px auto 18px',
-            fontSize:'clamp(42px,7vw,78px)',
-            lineHeight:.98,
-            letterSpacing:'-5px',
-            fontWeight:800
-          }}>
-            Menos bagunça.
-            <br/>
-            <span style={{color:'#d7ff11'}}>Mais controle.</span>
-          </h1>
+      <section className="lp-strip"><div className="lp-container lp-strip-inner"><div><ClipboardList size={16}/>Pedidos</div><div><CakeSlice size={16}/>Receitas</div><div><Package size={16}/>Despensa</div><div><WalletCards size={16}/>Finanças</div><div><Sparkles size={16}/>Marketing com IA</div><div><UserRound size={16}/>Meu negócio</div></div></section>
 
-          <p style={{
-            maxWidth:650,
-            margin:'0 auto',
-            color:'#969a98',
-            fontSize:17,
-            lineHeight:1.7
-          }}>
-            O Confeasy reúne pedidos, receitas, ingredientes,
-            despesas e organização do seu negócio em um só lugar.
-          </p>
+      <section id="recursos" className="lp-section"><div className="lp-container">
+        <div className="lp-section-head"><div className="lp-eyebrow center">Tudo conectado</div><h2>Menos ferramentas espalhadas.<br/>Mais visão do seu negócio.</h2><p>O Confeasy reúne tarefas que normalmente ficam em planilhas, cadernos e aplicativos diferentes.</p></div>
+        <div className="lp-features">{features.map(feature=><article className="lp-feature" key={feature.title}><div className="lp-feature-icon">{feature.icon}</div><h3>{feature.title}</h3><p>{feature.text}</p></article>)}</div>
+      </div></section>
 
-          <div style={{
-            marginTop:32,
-            display:'flex',
-            justifyContent:'center',
-            gap:10,
-            flexWrap:'wrap'
-          }}>
-            <a
-              href="#planos"
-              style={{
-                display:'inline-flex',
-                alignItems:'center',
-                justifyContent:'center',
-                minHeight:50,
-                padding:'0 24px',
-                borderRadius:11,
-                background:'#d7ff11',
-                color:'#090a09',
-                textDecoration:'none',
-                fontSize:13,
-                fontWeight:800
-              }}
-            >
-              Começar agora →
-            </a>
+      <section className="lp-showcase"><div className="lp-container lp-showcase-grid"><div className="lp-showcase-copy"><div className="lp-eyebrow">Do planejamento à entrega</div><h2>Veja sua confeitaria <em>em movimento.</em></h2><p>Tenha uma visão mais clara do que está acontecendo: pedidos entrando, receitas sendo organizadas, ingredientes controlados e números registrados.</p><div className="lp-checks"><div><CheckCircle2 size={15}/>Organize pedidos e datas de entrega.</div><div><CheckCircle2 size={15}/>Conheça melhor o custo das suas receitas.</div><div><CheckCircle2 size={15}/>Acompanhe ingredientes e despesas.</div><div><CheckCircle2 size={15}/>Crie ideias para divulgar seus produtos.</div></div></div><div className="lp-screen-wall"><MiniScreen type="dashboard"/><MiniScreen type="orders"/><MiniScreen type="recipes"/><MiniScreen type="dashboard"/></div></div></section>
 
-            <a
-              href="#recursos"
-              style={{
-                display:'inline-flex',
-                alignItems:'center',
-                justifyContent:'center',
-                minHeight:50,
-                padding:'0 24px',
-                borderRadius:11,
-                background:'rgba(255,255,255,.05)',
-                border:'1px solid rgba(255,255,255,.10)',
-                color:'#fff',
-                textDecoration:'none',
-                fontSize:13,
-                fontWeight:700
-              }}
-            >
-              Conhecer o Confeasy
-            </a>
-          </div>
-        </section>
+      <section className="lp-benefit"><div className="lp-container"><div className="lp-benefit-card"><div><div className="lp-eyebrow">Mais clareza na rotina</div><h2>Você faz os doces.<br/><em>O Confeasy organiza o resto.</em></h2><p>Centralize informações importantes e tenha uma rotina mais prática para cuidar do seu negócio sem depender de anotações espalhadas.</p><div className="lp-benefit-list"><div><CheckCircle2 size={15}/>Pedidos e clientes organizados.</div><div><CheckCircle2 size={15}/>Receitas e custos em um só lugar.</div><div><CheckCircle2 size={15}/>Estoque e despesas acompanhados.</div><div><CheckCircle2 size={15}/>Marketing com ideias para adaptar.</div></div></div><div className="lp-floating-phone"><div className="lp-notch"></div><div className="lp-phone-screen"><div className="lp-phone-logo">confeasy<span>.</span></div><div className="lp-phone-card"><small>Resultado registrado</small><b className="lime">R$ 3.240,00</b></div><div className="lp-phone-card"><small>Próximas entregas</small><b>3 pedidos</b></div><div className="lp-phone-card"><small>Despensa</small><b>8 itens para repor</b></div><div className="lp-phone-card"><small>Marketing</small><b>Nova ideia disponível ✦</b></div></div></div></div></div></section>
 
-        <section id="recursos" style={{
-          maxWidth:1180,
-          margin:'0 auto',
-          padding:'20px 24px 90px'
-        }}>
-          <div style={{
-            textAlign:'center',
-            marginBottom:38
-          }}>
-            <div style={{
-              color:'#d7ff11',
-              fontSize:11,
-              fontWeight:700,
-              letterSpacing:'.12em',
-              textTransform:'uppercase'
-            }}>
-              Tudo em um só lugar
-            </div>
+      <section id="como-funciona" className="lp-how"><div className="lp-container"><div className="lp-section-head"><div className="lp-eyebrow center">Comece sem complicação</div><h2>Do pagamento ao seu primeiro acesso.</h2><p>Um processo simples para começar a usar a ferramenta.</p></div><div className="lp-steps"><article><strong>01</strong><h3>Escolha seu plano</h3><p>Selecione 30, 90 ou 365 dias de acesso.</p></article><article><strong>02</strong><h3>Faça o pagamento</h3><p>Você será direcionada ao ambiente seguro de pagamento do Asaas.</p></article><article><strong>03</strong><h3>Comece a organizar</h3><p>Depois da confirmação, seu acesso ao Confeasy é liberado para você entrar e começar.</p></article></div></div></section>
 
-            <h2 style={{
-              margin:'10px 0 8px',
-              fontSize:'clamp(28px,4vw,42px)',
-              letterSpacing:'-2px'
-            }}>
-              Feito para a rotina da confeiteira.
-            </h2>
+      <section id="planos" className="lp-pricing"><div className="lp-container"><div className="lp-section-head"><div className="lp-eyebrow center">Escolha seu acesso</div><h2>Seu próximo passo começa aqui.</h2><p>Três opções de acesso. Escolha a que faz sentido para sua rotina.</p></div><div className="lp-plans">{plans.map(plan=><article className={plan.featured?'lp-plan featured':'lp-plan'} key={plan.days}>{plan.featured&&<div className="lp-badge">Mais escolhido</div>}<div className="lp-plan-tag">{plan.days}</div><div className="lp-price">{plan.price}</div><small>acesso Confeasy</small><p>{plan.description}</p><div className="lp-plan-list"><span><CheckCircle2 size={14}/>Pedidos e clientes</span><span><CheckCircle2 size={14}/>Receitas e custos</span><span><CheckCircle2 size={14}/>Despensa e ingredientes</span><span><CheckCircle2 size={14}/>Finanças e marketing</span></div><a className="lp-btn lp-btn-main" href={plan.link} target="_blank" rel="noopener noreferrer">{plan.cta} <ArrowRight size={15}/></a></article>)}</div><div className="lp-payments"><span><CheckCircle2 size={13}/>Pagamento via Asaas</span><span><WalletCards size={13}/>Boleto / Pix</span><span><CheckCircle2 size={13}/>Acesso após confirmação</span></div></div></section>
 
-            <p style={{
-              margin:0,
-              color:'#969a98',
-              fontSize:14
-            }}>
-              Ferramentas simples para você cuidar melhor do seu negócio.
-            </p>
-          </div>
+      <section className="lp-final"><div className="lp-container"><h2>Menos tempo procurando.<br/><em>Mais tempo fazendo.</em></h2><p>Escolha seu plano e coloque sua confeitaria em ordem.</p><div className="lp-final-plans">{plans.map(plan=><a key={plan.days} className="lp-btn lp-btn-main" href={plan.link} target="_blank" rel="noopener noreferrer">{plan.cta} <ArrowRight size={14}/></a>)}</div></div></section>
+    </main>
 
-          <div style={{
-            display:'grid',
-            gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',
-            gap:12
-          }}>
-            {features.map(([title,text])=>(
-              <div
-                key={title}
-                style={{
-                  padding:23,
-                  background:'#111314',
-                  border:'1px solid rgba(255,255,255,.08)',
-                  borderRadius:17
-                }}
-              >
-                <div style={{
-                  width:38,
-                  height:38,
-                  display:'grid',
-                  placeItems:'center',
-                  borderRadius:11,
-                  marginBottom:17,
-                  background:'rgba(215,255,17,.09)',
-                  color:'#d7ff11',
-                  fontWeight:800
-                }}>
-                  ✓
-                </div>
-
-                <h3 style={{
-                  margin:'0 0 7px',
-                  fontSize:16
-                }}>
-                  {title}
-                </h3>
-
-                <p style={{
-                  margin:0,
-                  color:'#969a98',
-                  fontSize:12,
-                  lineHeight:1.65
-                }}>
-                  {text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={{
-          maxWidth:1180,
-          margin:'0 auto',
-          padding:'20px 24px 100px'
-        }}>
-          <div style={{
-            padding:'35px',
-            borderRadius:22,
-            background:'linear-gradient(135deg,#111414,#0d0f10)',
-            border:'1px solid rgba(255,255,255,.08)',
-            display:'grid',
-            gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',
-            gap:30,
-            alignItems:'center'
-          }}>
-            <div>
-              <div style={{
-                color:'#d7ff11',
-                fontSize:11,
-                fontWeight:700,
-                letterSpacing:'.12em',
-                textTransform:'uppercase'
-              }}>
-                Mais organização
-              </div>
-
-              <h2 style={{
-                margin:'10px 0 12px',
-                fontSize:'clamp(28px,4vw,42px)',
-                letterSpacing:'-2px'
-              }}>
-                Você cuida dos seus doces.
-                <br/>
-                O Confeasy cuida da organização.
-              </h2>
-
-              <p style={{
-                margin:0,
-                color:'#969a98',
-                fontSize:13,
-                lineHeight:1.7
-              }}>
-                Tenha uma visão mais clara da sua produção,
-                dos seus pedidos e dos números da sua confeitaria.
-              </p>
-            </div>
-
-            <div style={{
-              padding:25,
-              borderRadius:18,
-              background:'rgba(215,255,17,.055)',
-              border:'1px solid rgba(215,255,17,.12)'
-            }}>
-              <div style={{
-                color:'#969a98',
-                fontSize:11,
-                marginBottom:8
-              }}>
-                Comece hoje
-              </div>
-
-              <div style={{
-                fontSize:32,
-                fontWeight:800,
-                letterSpacing:'-1px'
-              }}>
-                A partir de
-                <span style={{color:'#d7ff11'}}> R$ 19,90</span>
-              </div>
-
-              <a
-                href="#planos"
-                style={{
-                  display:'flex',
-                  alignItems:'center',
-                  justifyContent:'center',
-                  minHeight:46,
-                  marginTop:18,
-                  borderRadius:10,
-                  background:'#d7ff11',
-                  color:'#090a09',
-                  textDecoration:'none',
-                  fontSize:13,
-                  fontWeight:800
-                }}
-              >
-                Ver planos
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section id="planos" style={{
-          maxWidth:1180,
-          margin:'0 auto',
-          padding:'20px 24px 110px'
-        }}>
-          <div style={{
-            textAlign:'center',
-            marginBottom:38
-          }}>
-            <div style={{
-              color:'#d7ff11',
-              fontSize:11,
-              fontWeight:700,
-              letterSpacing:'.12em',
-              textTransform:'uppercase'
-            }}>
-              Escolha seu acesso
-            </div>
-
-            <h2 style={{
-              margin:'10px 0 8px',
-              fontSize:'clamp(30px,4vw,44px)',
-              letterSpacing:'-2px'
-            }}>
-              Comece pelo plano que combina com você.
-            </h2>
-
-            <p style={{
-              margin:0,
-              color:'#969a98',
-              fontSize:14
-            }}>
-              Pagamento seguro pelo Asaas.
-            </p>
-          </div>
-
-          <div style={{
-            display:'grid',
-            gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',
-            gap:14
-          }}>
-            {plans.map(plan=>(
-              <div
-                key={plan.days}
-                style={{
-                  position:'relative',
-                  padding:25,
-                  borderRadius:19,
-                  background:plan.featured?'linear-gradient(145deg,#171b13,#111314)':'#111314',
-                  border:plan.featured
-                    ?'1px solid rgba(215,255,17,.38)'
-                    :'1px solid rgba(255,255,255,.08)',
-                  boxShadow:plan.featured
-                    ?'0 20px 70px rgba(215,255,17,.07)'
-                    :'none'
-                }}
-              >
-                {plan.featured&&(
-                  <div style={{
-                    position:'absolute',
-                    top:16,
-                    right:16,
-                    padding:'5px 9px',
-                    borderRadius:999,
-                    background:'#d7ff11',
-                    color:'#090a09',
-                    fontSize:9,
-                    fontWeight:800,
-                    textTransform:'uppercase'
-                  }}>
-                    Mais escolhido
-                  </div>
-                )}
-
-                <div style={{
-                  color:'#969a98',
-                  fontSize:12,
-                  fontWeight:700
-                }}>
-                  {plan.days}
-                </div>
-
-                <div style={{
-                  marginTop:12,
-                  fontSize:34,
-                  fontWeight:800,
-                  letterSpacing:'-1.5px'
-                }}>
-                  {plan.price}
-                </div>
-
-                <p style={{
-                  minHeight:43,
-                  margin:'10px 0 20px',
-                  color:'#969a98',
-                  fontSize:12,
-                  lineHeight:1.55
-                }}>
-                  {plan.description}
-                </p>
-
-                <div style={{
-                  display:'grid',
-                  gap:9,
-                  marginBottom:22,
-                  color:'#c9cdca',
-                  fontSize:11
-                }}>
-                  <span>✓ Acesso ao Confeasy</span>
-                  <span>✓ Pedidos e receitas</span>
-                  <span>✓ Controle de ingredientes</span>
-                  <span>✓ Finanças e organização</span>
-                </div>
-
-                <a
-                  href={plan.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center',
-                    minHeight:48,
-                    borderRadius:10,
-                    background:'#d7ff11',
-                    color:'#090a09',
-                    textDecoration:'none',
-                    fontSize:13,
-                    fontWeight:800
-                  }}
-                >
-                  Quero este plano →
-                </a>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={{
-          textAlign:'center',
-          padding:'30px 24px 80px'
-        }}>
-          <div style={{
-            maxWidth:700,
-            margin:'0 auto',
-            padding:'55px 25px',
-            borderTop:'1px solid rgba(255,255,255,.07)'
-          }}>
-            <h2 style={{
-              margin:'0 0 12px',
-              fontSize:'clamp(28px,4vw,42px)',
-              letterSpacing:'-2px'
-            }}>
-              Sua confeitaria merece mais organização.
-            </h2>
-
-            <p style={{
-              margin:'0 0 25px',
-              color:'#969a98',
-              fontSize:13
-            }}>
-              Escolha seu plano e comece a usar o Confeasy.
-            </p>
-
-            <a
-              href="#planos"
-              style={{
-                display:'inline-flex',
-                alignItems:'center',
-                justifyContent:'center',
-                minHeight:48,
-                padding:'0 24px',
-                borderRadius:10,
-                background:'#d7ff11',
-                color:'#090a09',
-                textDecoration:'none',
-                fontSize:13,
-                fontWeight:800
-              }}
-            >
-              Começar agora →
-            </a>
-          </div>
-        </section>
-
-      </main>
-
-      <footer style={{
-        padding:'25px 24px',
-        borderTop:'1px solid rgba(255,255,255,.07)',
-        textAlign:'center',
-        color:'#686d6b',
-        fontSize:10
-      }}>
-        © {new Date().getFullYear()} Confeasy. Organização para sua confeitaria.
-      </footer>
-    </div>
-  );
+    <footer className="lp-footer"><div className="lp-container lp-footer-inner"><span>© {new Date().getFullYear()} Confeasy. Organização para sua confeitaria.</span><a href="/app">Já sou cliente →</a></div></footer>
+    <div className="lp-mobile-cta"><a href="#planos">VER PLANOS • A PARTIR DE R$ 19,90</a></div>
+  </div>;
 }
 
 
