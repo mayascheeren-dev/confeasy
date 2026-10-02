@@ -247,7 +247,7 @@ function ExpiredScreen({profile,onLogout}){
 function AppShell({session,profile,setProfile,page,setPage,onLogout,notify,toast}){
   const items=[
     ['dashboard','Visão geral',CakeSlice],
-    ['recipes','Receitas',CakeSlice],
+    ['receitas','Calculadora',Fatia de bolo],
     ['orders','Pedidos',ClipboardList],
     ['finance','Finanças',CircleDollarSign],
     ['pantry','Despensa',Package],
@@ -490,6 +490,7 @@ function Recipes({session,notify,profile,setProfile}){
     delivery:0,
     other:0
   });
+  const [ifoodRate,setIfoodRate]=useState(null);
 
   async function load(){
     const {data,error}=await supabase
@@ -608,14 +609,19 @@ function Recipes({session,notify,profile,setProfile}){
         : 0;
 
     const ifoodBasic=
-      suggestedPrice>0
-        ? suggestedPrice/(1-0.152)
-        : 0;
+  suggestedPrice>0
+    ? suggestedPrice/(1-0.152)
+    : 0;
 
-    const ifoodDelivery=
-      suggestedPrice>0
-        ? suggestedPrice/(1-0.262)
-        : 0;
+const ifoodDelivery=
+  suggestedPrice>0
+    ? suggestedPrice/(1-0.262)
+    : 0;
+
+const ifoodSelectedPrice=
+  suggestedPrice>0 && ifoodRate
+    ? suggestedPrice/(1-ifoodRate)
+    : 0;
 
     return {
       ingredientTotal,
@@ -627,8 +633,9 @@ function Recipes({session,notify,profile,setProfile}){
       roundedPrice,
       psychologicalPrice,
       ifoodBasic,
-      ifoodDelivery,
-      prepMinutes
+ifoodDelivery,
+ifoodSelectedPrice,
+prepMinutes
     };
   },[
     form.ingredients,
@@ -638,6 +645,7 @@ function Recipes({session,notify,profile,setProfile}){
     hourlyRate,
     ingredientsCatalog,
     additionalCosts
+    ifoodRate
   ]);
 
   function setF(key,value){
@@ -2493,43 +2501,71 @@ function Recipes({session,notify,profile,setProfile}){
 
               </div>
 
-              <div className="calc-ifood">
+        <div className="calc-ifood">
 
-                <div className="calc-ifood-card">
-                  <div>
-                    <span>
-                      iFood • 15,2%
-                    </span>
+  <button
+    type="button"
+    className="calc-ifood-card"
+    onClick={()=>setIfoodRate(0.152)}
+    style={{
+      cursor:'pointer',
+      textAlign:'left',
+      width:'100%',
+      background:ifoodRate===0.152
+        ? 'rgba(215,255,17,.12)'
+        : undefined,
+      borderColor:ifoodRate===0.152
+        ? 'rgba(215,255,17,.55)'
+        : undefined
+    }}
+  >
+    <div>
+      <span>
+        iFood • 15,2%
+      </span>
 
-                    <strong>
-                      {money(calc.ifoodBasic)}
-                    </strong>
-                  </div>
+      <strong>
+        {money(calc.ifoodBasic)}
+      </strong>
+    </div>
 
-                  <small>
-                    Valor aproximado para preservar
-                    o preço líquido desejado.
-                  </small>
-                </div>
+    <small>
+      Clique para selecionar esta taxa
+    </small>
+  </button>
 
-                <div className="calc-ifood-card">
-                  <div>
-                    <span>
-                      iFood • 26,2%
-                    </span>
+  <button
+    type="button"
+    className="calc-ifood-card"
+    onClick={()=>setIfoodRate(0.262)}
+    style={{
+      cursor:'pointer',
+      textAlign:'left',
+      width:'100%',
+      background:ifoodRate===0.262
+        ? 'rgba(215,255,17,.12)'
+        : undefined,
+      borderColor:ifoodRate===0.262
+        ? 'rgba(215,255,17,.55)'
+        : undefined
+    }}
+  >
+    <div>
+      <span>
+        iFood • 26,2%
+      </span>
 
-                    <strong>
-                      {money(calc.ifoodDelivery)}
-                    </strong>
-                  </div>
+      <strong>
+        {money(calc.ifoodDelivery)}
+      </strong>
+    </div>
 
-                  <small>
-                    Valor aproximado considerando
-                    a taxa de 26,2%.
-                  </small>
-                </div>
+    <small>
+      Clique para selecionar esta taxa
+    </small>
+  </button>
 
-              </div>
+</div>
 
             </section>
 
