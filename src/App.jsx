@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import {
-  ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
+  ArrowRight, Bell, CakeSlice, Calculator, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardList, Clock3, Edit3, ImagePlus, LogOut,
   Menu, Package, Plus, Search, Settings, Sparkles, Trash2, UserRound,
   X, ShoppingCart, WalletCards, MessageCircle, Image, FileText,
@@ -250,7 +250,7 @@ function ExpiredScreen({profile,onLogout}){
 function AppShell({session,profile,setProfile,page,setPage,onLogout,notify,toast}){
   const items=[
     ['dashboard','Visão geral',CakeSlice],
-    ['recipes','Calculadora',CakeSlice],
+   ['recipes','Calculadora',Calculator],
     ['orders','Pedidos',ClipboardList],
     ['finance','Finanças',CircleDollarSign],
     ['pantry','Despensa',Package],
