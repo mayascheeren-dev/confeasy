@@ -3393,43 +3393,7 @@ function Marketing({profile,setPage}){
   const [artText,setArtText]=useState(
     'Bolos feitos para momentos especiais'
   );
-  const [generating,setGenerating]=useState(false);
-const [generatedImage,setGeneratedImage]=useState('');
-const [generationError,setGenerationError]=useState('');
-async function generateArt(){
-  setGenerating(true);
-  setGenerationError('');
 
-  try{
-    const response=await fetch('/api/generate-image',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        businessName:profile?.business_name||'Minha Confeitaria',
-        product:'Bolo de aniversário',
-        format,
-        style,
-        text:artText
-      })
-    });
-
-    const data=await response.json();
-
-    if(!response.ok){
-      throw new Error(data?.error||'Não foi possível gerar a arte.');
-    }
-
-    setGeneratedImage(data.image);
-  }catch(error){
-    setGenerationError(
-      error?.message||'Não foi possível gerar a arte.'
-    );
-  }finally{
-    setGenerating(false);
-  }
-}
   function sendMessage(e){
     e?.preventDefault();
 
@@ -4015,14 +3979,12 @@ async function generateArt(){
             </button>
 
 
-            <button
+      <button
   type="button"
   className="marketing-ai-generate"
-  onClick={generateArt}
-  disabled={generating}
 >
   <WandSparkles size={17}/>
-  {generating ? 'Gerando sua arte...' : 'Gerar minha arte'}
+  Gerar minha arte
 </button>
 
           </div>
