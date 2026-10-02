@@ -3394,6 +3394,31 @@ function Marketing({profile,setPage}){
     'Bolos feitos para momentos especiais'
   );
 
+  const [products,setProducts]=useState([]);
+  const [selectedProductId,setSelectedProductId]=useState('');
+  const [artPhoto,setArtPhoto]=useState('');
+  const [photoMessage,setPhotoMessage]=useState('');
+    useEffect(()=>{
+    async function loadProducts(){
+      const {data,error}=await supabase
+        .from('recipes')
+        .select('id,name,photo_url,category')
+        .order('name');
+
+      if(error){
+        notify(error.message);
+        return;
+      }
+
+      setProducts(data||[]);
+
+      if(data?.length){
+        setSelectedProductId(String(data[0].id));
+      }
+    }
+
+    loadProducts();
+  },[]);
   async function sendMessage(e){
   e?.preventDefault();
 
@@ -3951,16 +3976,30 @@ Não invente informações sobre o negócio que não foram fornecidas.`
 
 
             <Field label="O que você quer divulgar?">
-
-              <select>
-                <option>Bolo de aniversário</option>
-                <option>Brigadeiros gourmet</option>
-                <option>Brownie</option>
-                <option>Produto personalizado</option>
-                <option>Outro produto</option>
-              </select>
-
-            </Field>
+  <select
+    value={selectedProductId}
+    onChange={e=>{
+      setSelectedProductId(e.target.value);
+      setArtPhoto('');
+      setPhotoMessage('');
+    }}
+  >
+    {products.length ? (
+      products.map(product=>(
+        <option
+          key={product.id}
+          value={String(product.id)}
+        >
+          {product.name}
+        </option>
+      ))
+    ) : (
+      <option value="">
+        Nenhum produto cadastrado
+      </option>
+    )}
+  </select>
+</Field>
 
 
             <div className="marketing-ai-field">
@@ -4044,12 +4083,31 @@ Não invente informações sobre o negócio que não foram fornecidas.`
 
 
             <button
-              type="button"
-              className="marketing-ai-photo-button"
-            >
-              <ImagePlus size={17}/>
-              Usar foto cadastrada no produto
-            </button>
+  type="button"
+  className="marketing-ai-photo-button"
+  onClick={()=>{
+    const product=products.find(
+      item=>String(item.id)===String(selectedProductId)
+    );
+
+    if(!product){
+      setPhotoMessage('Selecione um produto.');
+      return;
+    }
+
+    if(!product.photo_url){
+      setArtPhoto('');
+      setPhotoMessage('Este produto ainda não possui uma foto cadastrada.');
+      return;
+    }
+
+    setArtPhoto(product.photo_url);
+    setPhotoMessage('Foto do produto adicionada à criação.');
+  }}
+>
+  <ImagePlus size={17}/>
+  Usar foto cadastrada no produto
+</button>
 
 
       <button
@@ -4089,7 +4147,15 @@ Não invente informações sobre o negócio que não foram fornecidas.`
            <div className="marketing-ai-art">
 
   <div className="marketing-ai-art-product">
+ {artPhoto ? (
+  <img
+    src={artPhoto}
+    alt="Foto do produto"
+    className="marketing-ai-product-photo"
+  />
+) : (
   <CakeSlice size={105}/>
+)}
 </div>
 
 <div className="marketing-ai-art-copy">
