@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardList, Clock3, Edit3, ImagePlus, LogOut,
   Menu, Package, Plus, Search, Settings, Sparkles, Trash2, UserRound,
-  X, ShoppingCart, WalletCards
+  X, ShoppingCart, WalletCards, MessageCircle, Image, FileText,
+  Smartphone, Tag, Lightbulb, Send, Bot, Gift, CalendarDays,
+  Megaphone, WandSparkles, Pencil, Check, ChevronDown
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import './index.css';
@@ -3374,47 +3375,783 @@ function Pantry({session,notify}){
    MARKETING
 ========================================================= */
 
-function Marketing(){
-  const [topic,setTopic]=useState('');
-  const [type,setType]=useState('Reels');
-  const [out,setOut]=useState('');
+function Marketing({profile,setPage}){
 
-  function generate(){
-    const t=topic.trim()||'meus doces';
-    setOut(`IDEIA DE ${type.toUpperCase()}
+  const [activeTab,setActiveTab]=useState('assistant');
+  const [message,setMessage]=useState('');
+  const [messages,setMessages]=useState([
+    {
+      role:'ai',
+      text:`Olá, ${profile?.full_name?.split(' ')[0]||'confeiteira'}! Sou a assistente da sua confeitaria. Posso ajudar você com receitas, marketing, promoções, clientes e muito mais.`
+    }
+  ]);
 
-Gancho: Você também deixa ${t} para a última hora?
+  const [format,setFormat]=useState('Feed');
+  const [style,setStyle]=useState('Elegante');
+  const [artText,setArtText]=useState(
+    'Bolos feitos para momentos especiais'
+  );
 
-Desenvolvimento: mostre o produto em detalhes, explique o diferencial e apresente uma situação real da cliente.
+  function sendMessage(e){
+    e?.preventDefault();
 
-CTA: Me chama no WhatsApp e veja as opções disponíveis.
+    const text=message.trim();
 
-Dica: use uma foto ou vídeo real do seu produto para aumentar a conexão.`);
+    if(!text)return;
+
+    setMessages(prev=>[
+      ...prev,
+      {
+        role:'user',
+        text
+      },
+      {
+        role:'ai',
+        text:'Perfeito! Vou considerar isso na criação. Em breve esta conversa estará conectada à IA do Confeasy para gerar respostas, campanhas, receitas e conteúdos personalizados.'
+      }
+    ]);
+
+    setMessage('');
   }
 
-  return <section className="marketing-layout">
-    <div className="panel ai-panel">
-      <div className="eyebrow">Assistente</div>
-      <h2>Marketing com IA</h2>
-      <p>Crie rascunhos para divulgar seus produtos e sua confeitaria.</p>
-      <Field label="O que você quer divulgar?">
-        <textarea value={topic} onChange={e=>setTopic(e.target.value)} rows="5"
-          placeholder="Ex.: quero vender mais bolos de aniversário"/>
-      </Field>
-      <Field label="Formato">
-        <select value={type} onChange={e=>setType(e.target.value)}>
-          <option>Reels</option><option>Post</option><option>Carrossel</option>
-          <option>Stories</option><option>WhatsApp</option>
-        </select>
-      </Field>
-      <button className="primary wide" onClick={generate}><Sparkles size={16}/> Gerar ideia</button>
-    </div>
-    <div className="panel ai-output-panel">
-      <div className="section-head"><div><h2>Seu rascunho</h2><span>Revise antes de publicar.</span></div></div>
-      {out?<pre className="ai-output">{out}</pre>:
-        <div className="ai-placeholder"><Sparkles size={28}/><p>Digite um objetivo ao lado e o Confeasy prepara uma primeira ideia.</p></div>}
-    </div>
-  </section>;
+  function quickMessage(text){
+    setMessages(prev=>[
+      ...prev,
+      {
+        role:'user',
+        text
+      },
+      {
+        role:'ai',
+        text:'Ótimo! Posso transformar essa ideia em um conteúdo completo para sua confeitaria.'
+      }
+    ]);
+  }
+
+  function openCreator(){
+    setActiveTab('create');
+  }
+
+  const quickActions=[
+    {
+      title:'Criar publicação',
+      description:'Post pronto para Instagram',
+      icon:Smartphone,
+      action:openCreator
+    },
+    {
+      title:'Criar uma arte',
+      description:'Escolha produto, formato e estilo',
+      icon:Image,
+      action:openCreator
+    },
+    {
+      title:'Criar legenda',
+      description:'Texto com CTA para vender',
+      icon:FileText,
+      action:openCreator
+    },
+    {
+      title:'Criar Stories',
+      description:'Sequência de Stories para divulgar',
+      icon:MessageCircle,
+      action:openCreator
+    },
+    {
+      title:'Criar promoção',
+      description:'Oferta pensada para seu produto',
+      icon:Tag,
+      action:()=>quickMessage(
+        'Quero criar uma promoção para um dos meus produtos.'
+      )
+    },
+    {
+      title:'Ideias para hoje',
+      description:'Conteúdo rápido para publicar',
+      icon:Lightbulb,
+      action:()=>quickMessage(
+        'Me dê ideias de conteúdo para publicar hoje.'
+      )
+    }
+  ];
+
+  return (
+    <section className="marketing-ai-page">
+
+      <div className="marketing-ai-header">
+
+        <div>
+          <div className="marketing-ai-kicker">
+            CONFEASY • INTELIGÊNCIA PARA SUA CONFEITARIA
+          </div>
+
+          <h2>
+            Marketing <span>IA</span>
+          </h2>
+
+          <p>
+            Crie conteúdo, tire dúvidas e transforme ideias em vendas.
+          </p>
+        </div>
+
+        <div className="marketing-ai-business">
+
+          <div className="marketing-ai-business-avatar">
+            {(profile?.business_name||'M')[0].toUpperCase()}
+          </div>
+
+          <div>
+            <strong>
+              {profile?.business_name||'Minha Confeitaria'}
+            </strong>
+
+            <small>
+              Minha confeitaria
+            </small>
+          </div>
+
+          <ChevronDown size={15}/>
+
+        </div>
+
+      </div>
+
+
+      <div className="marketing-ai-tabs">
+
+        <button
+          type="button"
+          className={activeTab==='assistant'?'active':''}
+          onClick={()=>setActiveTab('assistant')}
+        >
+          <MessageCircle size={17}/>
+          Assistente
+        </button>
+
+        <button
+          type="button"
+          className={activeTab==='create'?'active':''}
+          onClick={()=>setActiveTab('create')}
+        >
+          <Image size={17}/>
+          Criar conteúdo
+        </button>
+
+        <button
+          type="button"
+          className={activeTab==='library'?'active':''}
+          onClick={()=>setActiveTab('library')}
+        >
+          <ImagePlus size={17}/>
+          Minhas criações
+        </button>
+
+      </div>
+
+
+      {activeTab==='assistant'&&(
+
+        <>
+
+          <div className="marketing-ai-main-grid">
+
+            <div className="marketing-ai-chat panel">
+
+              <div className="marketing-ai-chat-head">
+
+                <div className="marketing-ai-bot">
+                  <Bot size={22}/>
+                </div>
+
+                <div>
+                  <strong>
+                    Assistente Confeasy
+                  </strong>
+
+                  <span>
+                    Sua parceira para cuidar do negócio
+                  </span>
+                </div>
+
+                <div className="marketing-ai-status">
+                  <span></span>
+                  pronta para ajudar
+                </div>
+
+              </div>
+
+
+              <div className="marketing-ai-messages">
+
+                {messages.map((item,index)=>(
+                  <div
+                    key={index}
+                    className={
+                      item.role==='user'
+                        ? 'marketing-ai-message user'
+                        : 'marketing-ai-message ai'
+                    }
+                  >
+
+                    {item.role==='ai'&&(
+                      <div className="marketing-ai-message-icon">
+                        <Bot size={15}/>
+                      </div>
+                    )}
+
+                    <div>
+                      {item.text}
+                    </div>
+
+                  </div>
+                ))}
+
+
+                {messages.length===1&&(
+
+                  <div className="marketing-ai-suggestions">
+
+                    <button
+                      type="button"
+                      onClick={()=>
+                        quickMessage(
+                          'Quero uma ideia de conteúdo.'
+                        )
+                      }
+                    >
+                      <Lightbulb size={14}/>
+                      Ideias de conteúdo
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={()=>
+                        quickMessage(
+                          'Preciso de uma receita.'
+                        )
+                      }
+                    >
+                      <FileText size={14}/>
+                      Preciso de uma receita
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={()=>
+                        quickMessage(
+                          'Quero responder uma cliente.'
+                        )
+                      }
+                    >
+                      <MessageCircle size={14}/>
+                      Responder uma cliente
+                    </button>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              <div className="marketing-ai-chat-input">
+
+                <button
+                  type="button"
+                  className="marketing-ai-input-icon"
+                  title="Anexar"
+                >
+                  <ImagePlus size={18}/>
+                </button>
+
+                <form onSubmit={sendMessage}>
+                  <input
+                    value={message}
+                    onChange={e=>setMessage(e.target.value)}
+                    placeholder="Digite sua mensagem aqui..."
+                  />
+
+                  <button
+                    type="submit"
+                    className="marketing-ai-send"
+                    title="Enviar"
+                  >
+                    <Send size={18}/>
+                  </button>
+                </form>
+
+              </div>
+
+            </div>
+
+
+            <div className="marketing-ai-side">
+
+              <div className="marketing-ai-create-banner">
+
+                <div className="marketing-ai-banner-content">
+
+                  <span>
+                    TRANSFORME<br/>
+                    SUAS IDEIAS EM
+                  </span>
+
+                  <h3>
+                    Conteúdo<br/>
+                    <b>que vende</b>
+                  </h3>
+
+                  <p>
+                    Crie imagens, legendas, Stories e campanhas
+                    completas para sua confeitaria em segundos.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={openCreator}
+                  >
+                    Começar a criar
+                    <ArrowRight size={16}/>
+                  </button>
+
+                </div>
+
+                <div className="marketing-ai-banner-decoration">
+                  <CakeSlice size={150}/>
+                </div>
+
+              </div>
+
+
+              <div className="marketing-ai-today panel">
+
+                <div className="marketing-ai-section-title">
+
+                  <div>
+                    <h3>
+                      <Lightbulb size={19}/>
+                      O que postar hoje?
+                    </h3>
+
+                    <p>
+                      Sugestões personalizadas para sua confeitaria.
+                    </p>
+                  </div>
+
+                  <button type="button">
+                    <CalendarDays size={14}/>
+                    Ver mais sugestões
+                  </button>
+
+                </div>
+
+
+                <div className="marketing-ai-mini-grid">
+
+                  <button type="button">
+                    <CakeSlice size={23}/>
+                    <strong>Produto em destaque</strong>
+                    <span>
+                      Mostre seu bolo mais vendido do momento.
+                    </span>
+                    <ChevronRight size={15}/>
+                  </button>
+
+                  <button type="button">
+                    <Image size={23}/>
+                    <strong>Bastidores</strong>
+                    <span>
+                      Mostre um pouco do seu dia na confeitaria.
+                    </span>
+                    <ChevronRight size={15}/>
+                  </button>
+
+                  <button type="button">
+                    <Gift size={23}/>
+                    <strong>Oferta especial</strong>
+                    <span>
+                      Crie uma promoção para o fim de semana.
+                    </span>
+                    <ChevronRight size={15}/>
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="marketing-ai-quick">
+
+            <div className="marketing-ai-quick-head">
+
+              <div>
+                <h3>
+                  <WandSparkles size={21}/>
+                  Ações rápidas
+                </h3>
+
+                <p>
+                  Escolha o que você quer criar agora.
+                </p>
+              </div>
+
+              <span>
+                Tudo que você precisa para divulgar sua
+                confeitaria em um só lugar.
+              </span>
+
+            </div>
+
+
+            <div className="marketing-ai-quick-grid">
+
+              {quickActions.map((item,index)=>{
+
+                const Icon=item.icon;
+
+                return (
+                  <button
+                    type="button"
+                    key={index}
+                    className="marketing-ai-quick-card"
+                    onClick={item.action}
+                  >
+
+                    <div className="marketing-ai-quick-icon">
+                      <Icon size={28}/>
+                    </div>
+
+                    <ChevronRight
+                      className="marketing-ai-quick-arrow"
+                      size={17}
+                    />
+
+                    <strong>
+                      {item.title}
+                    </strong>
+
+                    <span>
+                      {item.description}
+                    </span>
+
+                  </button>
+                );
+
+              })}
+
+            </div>
+
+          </div>
+
+        </>
+
+      )}
+
+
+      {activeTab==='create'&&(
+
+        <div className="marketing-ai-create-page">
+
+          <div className="marketing-ai-create-config panel">
+
+            <div className="marketing-ai-create-heading">
+              <div className="marketing-ai-icon-title">
+                <WandSparkles size={20}/>
+              </div>
+
+              <div>
+                <h3>
+                  Criar conteúdo
+                </h3>
+
+                <p>
+                  Você escolhe o objetivo. A IA cuida da criação.
+                </p>
+              </div>
+            </div>
+
+
+            <Field label="O que você quer divulgar?">
+
+              <select>
+                <option>Bolo de aniversário</option>
+                <option>Brigadeiros gourmet</option>
+                <option>Brownie</option>
+                <option>Produto personalizado</option>
+                <option>Outro produto</option>
+              </select>
+
+            </Field>
+
+
+            <div className="marketing-ai-field">
+
+              <label>
+                FORMATO
+              </label>
+
+              <div className="marketing-ai-format-grid">
+
+                {[
+                  ['Feed','1080 × 1350'],
+                  ['Story','1080 × 1920'],
+                  ['Quadrado','1080 × 1080']
+                ].map(([name,size])=>(
+                  <button
+                    type="button"
+                    key={name}
+                    className={format===name?'active':''}
+                    onClick={()=>setFormat(name)}
+                  >
+                    <strong>
+                      {name}
+                    </strong>
+
+                    <span>
+                      {size}
+                    </span>
+                  </button>
+                ))}
+
+              </div>
+
+            </div>
+
+
+            <div className="marketing-ai-field">
+
+              <label>
+                ESTILO DA ARTE
+              </label>
+
+              <div className="marketing-ai-style-list">
+
+                {[
+                  'Elegante',
+                  'Delicado',
+                  'Luxuoso',
+                  'Artesanal',
+                  'Minimalista',
+                  'Colorido'
+                ].map(item=>(
+                  <button
+                    type="button"
+                    key={item}
+                    className={style===item?'active':''}
+                    onClick={()=>setStyle(item)}
+                  >
+                    {item}
+                  </button>
+                ))}
+
+              </div>
+
+            </div>
+
+
+            <div className="marketing-ai-field">
+
+              <label>
+                TEXTO NA ARTE
+              </label>
+
+              <input
+                value={artText}
+                onChange={e=>setArtText(e.target.value)}
+                placeholder="Ex.: Feito para momentos especiais"
+              />
+
+            </div>
+
+
+            <button
+              type="button"
+              className="marketing-ai-photo-button"
+            >
+              <ImagePlus size={17}/>
+              Usar foto cadastrada no produto
+            </button>
+
+
+            <button
+              type="button"
+              className="marketing-ai-generate"
+            >
+              <WandSparkles size={17}/>
+              Gerar minha arte
+            </button>
+
+          </div>
+
+
+          <div className="marketing-ai-preview panel">
+
+            <div className="marketing-ai-preview-head">
+
+              <div>
+                <strong>
+                  Prévia da criação
+                </strong>
+
+                <span>
+                  {format} • {
+                    format==='Feed'
+                      ? '1080 × 1350'
+                      : format==='Story'
+                        ? '1080 × 1920'
+                        : '1080 × 1080'
+                  }
+                </span>
+              </div>
+
+            </div>
+
+
+            <div className="marketing-ai-art">
+
+              <div className="marketing-ai-art-product">
+                <CakeSlice size={105}/>
+              </div>
+
+              <div className="marketing-ai-art-copy">
+
+                <small>
+                  {profile?.business_name||'MINHA CONFEITARIA'}
+                </small>
+
+                <h3>
+                  {artText||'Momentos especiais.'}
+                </h3>
+
+                <p>
+                  Bolos feitos com carinho para celebrar.
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="marketing-ai-preview-actions">
+
+              <button type="button">
+                <WandSparkles size={15}/>
+                Gerar outra
+              </button>
+
+              <button type="button">
+                <Pencil size={15}/>
+                Editar
+              </button>
+
+              <button
+                type="button"
+                className="primary"
+              >
+                <Check size={15}/>
+                Usar criação
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {activeTab==='library'&&(
+
+        <div className="marketing-ai-library">
+
+          <div className="marketing-ai-library-head">
+
+            <div>
+              <h3>
+                Minhas criações
+              </h3>
+
+              <p>
+                Tudo que você criou com a IA em um só lugar.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="primary"
+              onClick={openCreator}
+            >
+              <Plus size={16}/>
+              Nova criação
+            </button>
+
+          </div>
+
+
+          <div className="marketing-ai-gallery">
+
+            {[
+              ['Bolo de aniversário','Feed','Bolos especiais.'],
+              ['Brigadeiros gourmet','Story','Seu doce momento.'],
+              ['Promoção de fim de semana','Feed','Feito para celebrar.']
+            ].map((item,index)=>(
+              <article
+                className="marketing-ai-gallery-card"
+                key={index}
+              >
+
+                <div className={`marketing-ai-gallery-image gallery-${index+1}`}>
+
+                  <span>
+                    {item[2]}
+                  </span>
+
+                </div>
+
+                <div className="marketing-ai-gallery-info">
+
+                  <strong>
+                    {item[0]}
+                  </strong>
+
+                  <small>
+                    {item[1]} • criado recentemente
+                  </small>
+
+                  <div>
+
+                    <button type="button">
+                      Abrir
+                    </button>
+
+                    <button type="button">
+                      Editar
+                    </button>
+
+                    <button type="button">
+                      …
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </article>
+            ))}
+
+          </div>
+
+        </div>
+
+      )}
+
+    </section>
+  );
 }
 
 /* =========================================================
