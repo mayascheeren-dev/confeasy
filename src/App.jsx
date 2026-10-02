@@ -455,14 +455,23 @@ function Empty({text,action,onClick}){
 }
 
 /* =========================================================
-   CALCULADORA / RECEITAS
+   CALCULADORA
 ========================================================= */
 
 function Recipes({session,notify,profile,setProfile}){
   const blank={
-    name:'',category:'Bolos',photo_url:'',yield_amount:'1',yield_unit:'un',
-    portion_size:'',prep_time_minutes:'',desired_margin:'40',sale_price:'',
-    preparation:'',notes:'',ingredients:[]
+    name:'',
+    category:'Bolos',
+    photo_url:'',
+    yield_amount:'1',
+    yield_unit:'un',
+    portion_size:'',
+    prep_time_minutes:'',
+    desired_margin:'40',
+    sale_price:'',
+    preparation:'',
+    notes:'',
+    ingredients:[]
   };
 
   const [rows,setRows]=useState([]);
@@ -475,26 +484,42 @@ function Recipes({session,notify,profile,setProfile}){
   const [uploading,setUploading]=useState(false);
   const [savingLabor,setSavingLabor]=useState(false);
 
+  const [additionalCosts,setAdditionalCosts]=useState({
+    packaging:0,
+    energy:0,
+    delivery:0,
+    other:0
+  });
+
   async function load(){
-    const {data,error}=await supabase.from('recipes')
+    const {data,error}=await supabase
+      .from('recipes')
       .select('*, recipe_ingredients(*)')
       .order('created_at',{ascending:false});
+
     if(error) notify(error.message);
     else setRows(data||[]);
   }
 
   async function loadCatalog(){
-    const {data,error}=await supabase.from('ingredients')
-      .select('*').order('name');
+    const {data,error}=await supabase
+      .from('ingredients')
+      .select('*')
+      .order('name');
+
     if(error) notify(error.message);
     else setIngredientsCatalog(data||[]);
   }
 
-  useEffect(()=>{load();loadCatalog()},[]);
+  useEffect(()=>{
+    load();
+    loadCatalog();
+  },[]);
 
   const monthlyHours=
-    Math.max(Number(profile?.work_hours_per_day)||0,0)*
-    Math.max(Number(profile?.work_days_per_week)||0,0)*4.33;
+    Math.max(Number(profile?.work_hours_per_day)||0,0) *
+    Math.max(Number(profile?.work_days_per_week)||0,0) *
+    4.33;
 
   const hourlyRate=
     monthlyHours>0
@@ -502,156 +527,431 @@ function Recipes({session,notify,profile,setProfile}){
       : 0;
 
   function ingredientCost(item){
-    const catalog=ingredientsCatalog.find(x=>x.id===item.ingredient_id);
-    if(!catalog) return Number(item.quantity||0)*Number(item.unit_cost||0);
+    const catalog=ingredientsCatalog.find(
+      x=>x.id===item.ingredient_id
+    );
 
-    const recipeBase=convertToBase(item.quantity,item.unit);
-    if(catalog.base_unit && UNIT_INFO[item.unit]?.base===catalog.base_unit){
+    if(!catalog){
+      return Number(item.quantity||0)*Number(item.unit_cost||0);
+    }
+
+    const recipeBase=convertToBase(
+      item.quantity,
+      item.unit
+    );
+
+    if(
+      catalog.base_unit &&
+      UNIT_INFO[item.unit]?.base===catalog.base_unit
+    ){
       return recipeBase*Number(catalog.base_unit_cost||0);
     }
+
     if(catalog.base_unit===item.unit){
-      return Number(item.quantity||0)*Number(catalog.base_unit_cost||0);
+      return Number(item.quantity||0)*
+        Number(catalog.base_unit_cost||0);
     }
-    return Number(item.quantity||0)*Number(catalog.base_unit_cost||0);
+
+    return Number(item.quantity||0)*
+      Number(catalog.base_unit_cost||0);
   }
 
   const calc=useMemo(()=>{
     const ingredientTotal=(form.ingredients||[]).reduce(
-      (sum,item)=>sum+ingredientCost(item),0
+      (sum,item)=>sum+ingredientCost(item),
+      0
     );
-    const prepMinutes=Math.max(Number(form.prep_time_minutes)||0,0);
-    const laborCost=(prepMinutes/60)*hourlyRate;
-    const totalCost=ingredientTotal+laborCost;
-    const yieldAmount=Math.max(Number(form.yield_amount)||0,0);
-    const unitCost=yieldAmount>0?totalCost/yieldAmount:0;
-    const margin=clamp(form.desired_margin,0,99.99);
-    const suggestedPrice=unitCost>0?unitCost/(1-margin/100):0;
 
-    return {ingredientTotal,laborCost,totalCost,unitCost,suggestedPrice,prepMinutes};
-  },[form.ingredients,form.prep_time_minutes,form.yield_amount,form.desired_margin,hourlyRate,ingredientsCatalog]);
+    const prepMinutes=Math.max(
+      Number(form.prep_time_minutes)||0,
+      0
+    );
 
-  function setF(key,value){setForm(current=>({...current,[key]:value}));}
+    const laborCost=
+      (prepMinutes/60)*hourlyRate;
 
-  async function saveLaborSettings(){
-    setSavingLabor(true);
-    const payload={
-      desired_monthly_income:Math.max(Number(profile?.desired_monthly_income)||0,0),
-      work_hours_per_day:Math.max(Number(profile?.work_hours_per_day)||0,0),
-      work_days_per_week:Math.max(Number(profile?.work_days_per_week)||0,0)
+    const additionalTotal=
+      Number(additionalCosts.packaging||0)+
+      Number(additionalCosts.energy||0)+
+      Number(additionalCosts.delivery||0)+
+      Number(additionalCosts.other||0);
+
+    const totalCost=
+      ingredientTotal+
+      laborCost+
+      additionalTotal;
+
+    const yieldAmount=
+      Math.max(Number(form.yield_amount)||0,0);
+
+    const unitCost=
+      yieldAmount>0
+        ? totalCost/yieldAmount
+        : 0;
+
+    const margin=
+      clamp(form.desired_margin,0,99.99);
+
+    const suggestedPrice=
+      unitCost>0
+        ? unitCost/(1-margin/100)
+        : 0;
+
+    const roundedPrice=
+      suggestedPrice>0
+        ? Math.ceil(suggestedPrice*2)/2
+        : 0;
+
+    const psychologicalPrice=
+      roundedPrice>0
+        ? Math.floor(roundedPrice)+0.99
+        : 0;
+
+    const ifoodBasic=
+      suggestedPrice>0
+        ? suggestedPrice/(1-0.152)
+        : 0;
+
+    const ifoodDelivery=
+      suggestedPrice>0
+        ? suggestedPrice/(1-0.262)
+        : 0;
+
+    return {
+      ingredientTotal,
+      laborCost,
+      additionalTotal,
+      totalCost,
+      unitCost,
+      suggestedPrice,
+      roundedPrice,
+      psychologicalPrice,
+      ifoodBasic,
+      ifoodDelivery,
+      prepMinutes
     };
-    const {error}=await supabase.from('profiles').update(payload).eq('id',session.user.id);
-    if(error) notify(error.message);
-    else {
-      setProfile(current=>({...current,...payload}));
-      notify('Configuração da sua hora de trabalho salva.');
-    }
-    setSavingLabor(false);
+  },[
+    form.ingredients,
+    form.prep_time_minutes,
+    form.yield_amount,
+    form.desired_margin,
+    hourlyRate,
+    ingredientsCatalog,
+    additionalCosts
+  ]);
+
+  function setF(key,value){
+    setForm(current=>({
+      ...current,
+      [key]:value
+    }));
+  }
+
+  function setAdditional(key,value){
+    setAdditionalCosts(current=>({
+      ...current,
+      [key]:Number(value)||0
+    }));
   }
 
   function openNew(){
     setEditing(null);
-    setForm({...blank,ingredients:[{
-      id:uid(),ingredient_id:'',name:'',quantity:'',unit:'g',unit_cost:''
-    }]});
+
+    setForm({
+      ...blank,
+      ingredients:[{
+        id:uid(),
+        ingredient_id:'',
+        name:'',
+        quantity:'',
+        unit:'g',
+        unit_cost:''
+      }]
+    });
+
+    setAdditionalCosts({
+      packaging:0,
+      energy:0,
+      delivery:0,
+      other:0
+    });
+
     setOpen(true);
   }
 
   function openEdit(recipe){
     setEditing(recipe);
+
     setForm({
-      name:recipe.name||'',category:recipe.category||'Outros',
-      photo_url:recipe.photo_url||'',yield_amount:recipe.yield_amount||1,
-      yield_unit:recipe.yield_unit||'un',portion_size:recipe.portion_size||'',
+      name:recipe.name||'',
+      category:recipe.category||'Outros',
+      photo_url:recipe.photo_url||'',
+      yield_amount:recipe.yield_amount||1,
+      yield_unit:recipe.yield_unit||'un',
+      portion_size:recipe.portion_size||'',
       prep_time_minutes:recipe.prep_time_minutes||'',
-      desired_margin:recipe.desired_margin||40,sale_price:recipe.sale_price||'',
-      preparation:recipe.preparation||'',notes:recipe.notes||'',
+      desired_margin:recipe.desired_margin||40,
+      sale_price:recipe.sale_price||'',
+      preparation:recipe.preparation||'',
+      notes:recipe.notes||'',
       ingredients:(recipe.recipe_ingredients||[]).map(item=>({
-        id:item.id,ingredient_id:item.ingredient_id||'',
-        name:item.name||'',quantity:item.quantity||'',
-        unit:item.unit||'g',unit_cost:item.unit_cost||''
+        id:item.id,
+        ingredient_id:item.ingredient_id||'',
+        name:item.name||'',
+        quantity:item.quantity||'',
+        unit:item.unit||'g',
+        unit_cost:item.unit_cost||''
       }))
     });
+
+    setAdditionalCosts({
+      packaging:0,
+      energy:0,
+      delivery:0,
+      other:0
+    });
+
     setOpen(true);
   }
 
   async function upload(e){
     const file=e.target.files?.[0];
+
     if(!file)return;
-    if(file.size>5*1024*1024){notify('A foto pode ter no máximo 5 MB.');return;}
+
+    if(file.size>5*1024*1024){
+      notify('A foto pode ter no máximo 5 MB.');
+      return;
+    }
+
     setUploading(true);
-    const extension=file.name.split('.').pop()?.toLowerCase()||'jpg';
-    const path=`${session.user.id}/${uid()}.${extension}`;
-    const {error}=await supabase.storage.from('recipe-images').upload(path,file,{
-      upsert:false,contentType:file.type
-    });
-    if(error) notify(error.message);
-    else {
-      const {data}=supabase.storage.from('recipe-images').getPublicUrl(path);
+
+    const extension=
+      file.name.split('.').pop()?.toLowerCase()||'jpg';
+
+    const path=
+      `${session.user.id}/${uid()}.${extension}`;
+
+    const {error}=await supabase
+      .storage
+      .from('recipe-images')
+      .upload(path,file,{
+        upsert:false,
+        contentType:file.type
+      });
+
+    if(error){
+      notify(error.message);
+    }else{
+      const {data}=supabase
+        .storage
+        .from('recipe-images')
+        .getPublicUrl(path);
+
       setF('photo_url',data.publicUrl);
+
       notify('Foto adicionada.');
     }
+
     setUploading(false);
   }
 
   function selectIngredient(id,rowId){
-    const selected=ingredientsCatalog.find(x=>x.id===id);
-    setF('ingredients',(form.ingredients||[]).map(item=>{
-      if(item.id!==rowId)return item;
-      return {
-        ...item,
-        ingredient_id:id,
-        name:selected?.name||'',
-        unit:selected?.base_unit||'g',
-        unit_cost:Number(selected?.base_unit_cost||0)
-      };
-    }));
+    const selected=
+      ingredientsCatalog.find(x=>x.id===id);
+
+    setF(
+      'ingredients',
+      (form.ingredients||[]).map(item=>{
+        if(item.id!==rowId)return item;
+
+        return {
+          ...item,
+          ingredient_id:id,
+          name:selected?.name||'',
+          unit:selected?.base_unit||'g',
+          unit_cost:Number(
+            selected?.base_unit_cost||0
+          )
+        };
+      })
+    );
   }
 
   function updateIngredient(id,key,value){
-    setF('ingredients',(form.ingredients||[]).map(item=>
-      item.id===id?{...item,[key]:value}:item
-    ));
+    setF(
+      'ingredients',
+      (form.ingredients||[]).map(item=>
+        item.id===id
+          ? {...item,[key]:value}
+          : item
+      )
+    );
   }
 
   function addIngredient(){
-    setF('ingredients',[...(form.ingredients||[]),{
-      id:uid(),ingredient_id:'',name:'',quantity:'',unit:'g',unit_cost:''
-    }]);
+    setF(
+      'ingredients',
+      [
+        ...(form.ingredients||[]),
+        {
+          id:uid(),
+          ingredient_id:'',
+          name:'',
+          quantity:'',
+          unit:'g',
+          unit_cost:''
+        }
+      ]
+    );
   }
 
   function removeIngredient(id){
-    setF('ingredients',(form.ingredients||[]).filter(item=>item.id!==id));
+    setF(
+      'ingredients',
+      (form.ingredients||[]).filter(
+        item=>item.id!==id
+      )
+    );
+  }
+
+  async function saveLaborSettings(){
+    setSavingLabor(true);
+
+    const payload={
+      desired_monthly_income:
+        Math.max(
+          Number(profile?.desired_monthly_income)||0,
+          0
+        ),
+
+      work_hours_per_day:
+        Math.max(
+          Number(profile?.work_hours_per_day)||0,
+          0
+        ),
+
+      work_days_per_week:
+        Math.max(
+          Number(profile?.work_days_per_week)||0,
+          0
+        )
+    };
+
+    const {error}=await supabase
+      .from('profiles')
+      .update(payload)
+      .eq('id',session.user.id);
+
+    if(error){
+      notify(error.message);
+    }else{
+      setProfile(current=>({
+        ...current,
+        ...payload
+      }));
+
+      notify(
+        'Configuração da sua hora de trabalho salva.'
+      );
+    }
+
+    setSavingLabor(false);
   }
 
   async function save(e){
     e.preventDefault();
-    if(!form.name.trim()){notify('Informe o nome da receita.');return;}
+
+    if(!form.name.trim()){
+      notify('Informe o nome do produto.');
+      return;
+    }
 
     const payload={
-      user_id:session.user.id,name:form.name.trim(),category:form.category,
-      photo_url:form.photo_url||null,yield_amount:Number(form.yield_amount)||1,
+      user_id:session.user.id,
+      name:form.name.trim(),
+      category:form.category,
+      photo_url:form.photo_url||null,
+
+      yield_amount:
+        Number(form.yield_amount)||1,
+
       yield_unit:form.yield_unit,
-      yield_units:`${Number(form.yield_amount)||1} ${form.yield_unit}`,
-      portion_size:form.portion_size||null,
-      prep_time_minutes:Number(form.prep_time_minutes)||0,
-      ingredient_cost:calc.ingredientTotal,labor_cost:calc.laborCost,
-      cost:calc.totalCost,unit_cost:calc.unitCost,
-      suggested_price:calc.suggestedPrice,sale_price:Number(form.sale_price)||0,
-      desired_margin:clamp(form.desired_margin,0,99.99),
-      preparation:form.preparation||null,notes:form.notes||null
+
+      yield_units:
+        `${Number(form.yield_amount)||1} ${form.yield_unit}`,
+
+      portion_size:
+        form.portion_size||null,
+
+      prep_time_minutes:
+        Number(form.prep_time_minutes)||0,
+
+      ingredient_cost:
+        calc.ingredientTotal,
+
+      labor_cost:
+        calc.laborCost,
+
+      cost:
+        calc.totalCost,
+
+      unit_cost:
+        calc.unitCost,
+
+      suggested_price:
+        calc.suggestedPrice,
+
+      sale_price:
+        Number(form.sale_price)||
+        calc.psychologicalPrice,
+
+      desired_margin:
+        clamp(
+          form.desired_margin,
+          0,
+          99.99
+        ),
+
+      preparation:
+        form.preparation||null,
+
+      notes:
+        form.notes||null
     };
 
     let recipeId=editing?.id;
     let error=null;
 
     if(editing){
-      const result=await supabase.from('recipes').update(payload).eq('id',editing.id);
+      const result=await supabase
+        .from('recipes')
+        .update(payload)
+        .eq('id',editing.id);
+
       error=result.error;
-      if(error){notify(error.message);return;}
-      const deleted=await supabase.from('recipe_ingredients').delete().eq('recipe_id',editing.id);
-      if(deleted.error){notify(deleted.error.message);return;}
+
+      if(error){
+        notify(error.message);
+        return;
+      }
+
+      const deleted=await supabase
+        .from('recipe_ingredients')
+        .delete()
+        .eq('recipe_id',editing.id);
+
+      if(deleted.error){
+        notify(deleted.error.message);
+        return;
+      }
     }else{
-      const result=await supabase.from('recipes').insert(payload).select('id').single();
+      const result=await supabase
+        .from('recipes')
+        .insert(payload)
+        .select('id')
+        .single();
+
       recipeId=result.data?.id;
       error=result.error;
     }
@@ -671,202 +971,1680 @@ function Recipes({session,notify,profile,setProfile}){
       }));
 
     if(recipeRows.length){
-      const result=await supabase.from('recipe_ingredients').insert(recipeRows);
-      if(result.error){notify(result.error.message);return;}
+      const result=await supabase
+        .from('recipe_ingredients')
+        .insert(recipeRows);
+
+      if(result.error){
+        notify(result.error.message);
+        return;
+      }
     }
 
     setOpen(false);
-    notify(editing?'Receita atualizada.':'Receita salva.');
+
+    notify(
+      editing
+        ? 'Produto atualizado.'
+        : 'Produto salvo.'
+    );
+
     await load();
   }
 
   async function remove(id){
-    if(!confirm('Excluir esta receita?'))return;
-    const {error}=await supabase.from('recipes').delete().eq('id',id);
-    if(error)notify(error.message);
-    else load();
+    if(!confirm('Excluir este produto?'))return;
+
+    const {error}=await supabase
+      .from('recipes')
+      .delete()
+      .eq('id',id);
+
+    if(error){
+      notify(error.message);
+    }else{
+      notify('Produto excluído.');
+      load();
+    }
   }
 
-  // O custo exibido na lista é recalculado com os preços ATUAIS da Despensa.
-  // A receita continua vinculada aos ingredientes por ingredient_id.
-  // Assim, alterar o preço na Despensa atualiza custo total, custo por unidade
-  // e preço sugerido sem precisar editar/salvar a receita novamente.
-  const liveRows=useMemo(()=>rows.map(recipe=>{
-    const ingredientTotal=(recipe.recipe_ingredients||[]).reduce(
-      (sum,item)=>sum+ingredientCost(item),0
-    );
+  const liveRows=useMemo(()=>{
+    return rows.map(recipe=>{
+      const ingredientTotal=
+        (recipe.recipe_ingredients||[])
+          .reduce(
+            (sum,item)=>
+              sum+ingredientCost(item),
+            0
+          );
 
-    const prepMinutes=Math.max(Number(recipe.prep_time_minutes)||0,0);
-    const laborCost=(prepMinutes/60)*hourlyRate;
-    const totalCost=ingredientTotal+laborCost;
+      const prepMinutes=
+        Math.max(
+          Number(recipe.prep_time_minutes)||0,
+          0
+        );
 
-    const yieldAmount=Math.max(Number(recipe.yield_amount)||0,0);
-    const unitCost=yieldAmount>0?totalCost/yieldAmount:0;
+      const laborCost=
+        (prepMinutes/60)*hourlyRate;
 
-    const margin=clamp(recipe.desired_margin,0,99.99);
-    const suggestedPrice=unitCost>0
-      ? unitCost/(1-margin/100)
-      : 0;
+      const totalCost=
+        ingredientTotal+laborCost;
 
-    return {
-      ...recipe,
-      ingredient_cost:ingredientTotal,
-      labor_cost:laborCost,
-      cost:totalCost,
-      unit_cost:unitCost,
-      suggested_price:suggestedPrice
-    };
-  }),[rows,ingredientsCatalog,hourlyRate]);
+      const yieldAmount=
+        Math.max(
+          Number(recipe.yield_amount)||0,
+          0
+        );
+
+      const unitCost=
+        yieldAmount>0
+          ? totalCost/yieldAmount
+          : 0;
+
+      const margin=
+        clamp(
+          recipe.desired_margin,
+          0,
+          99.99
+        );
+
+      const suggestedPrice=
+        unitCost>0
+          ? unitCost/(1-margin/100)
+          : 0;
+
+      return {
+        ...recipe,
+        ingredient_cost:ingredientTotal,
+        labor_cost:laborCost,
+        cost:totalCost,
+        unit_cost:unitCost,
+        suggested_price:suggestedPrice
+      };
+    });
+  },[
+    rows,
+    ingredientsCatalog,
+    hourlyRate
+  ]);
 
   const filtered=liveRows.filter(r=>
-    (!query||r.name.toLowerCase().includes(query.toLowerCase())) &&
-    (category==='Todas'||r.category===category)
+    (
+      !query ||
+      String(r.name||'')
+        .toLowerCase()
+        .includes(query.toLowerCase())
+    ) &&
+    (
+      category==='Todas' ||
+      r.category===category
+    )
   );
 
   return <>
-    <div className="page-tools standard-page-tools">
-      <div className="standard-search-wrap">
-        <div className="search-box"><Search size={17}/>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar receita..."/>
-        </div>
-      </div>
-      <div className="standard-actions">
-        <select value={category} onChange={e=>setCategory(e.target.value)}>
-          <option>Todas</option>{CATEGORIES.map(c=><option key={c}>{c}</option>)}
-        </select>
-        <button className="primary" onClick={openNew}><Plus size={17}/> Calcular receita</button>
-      </div>
-    </div>
+    <style>{`
+      .calc-page{
+        display:grid;
+        gap:20px;
+      }
 
-    <section className="panel">
-      <div className="section-head">
-        <div><h2>Calculadora de receitas</h2>
-          <span>{filtered.length} receitas cadastradas</span></div>
-      </div>
+      .calc-toolbar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+        flex-wrap:wrap;
+      }
 
-      <div className="panel labor-panel">
-        <div><div className="eyebrow">Seu custo real</div>
-          <h3>Quanto vale sua hora de trabalho?</h3>
-          <p>Usamos sua renda desejada e sua jornada para calcular a mão de obra.</p>
+      .calc-search{
+        flex:1;
+        min-width:240px;
+        max-width:560px;
+      }
+
+      .calc-search .search-box{
+        width:100%;
+      }
+
+      .calc-actions{
+        display:flex;
+        gap:10px;
+        align-items:center;
+      }
+
+      .calc-actions select{
+        min-width:170px;
+      }
+
+      .calc-hero{
+        position:relative;
+        overflow:hidden;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:24px;
+        padding:28px;
+        background:
+          radial-gradient(circle at 85% 10%,rgba(215,255,17,.12),transparent 34%),
+          linear-gradient(135deg,#171a18,#0f1111);
+      }
+
+      .calc-hero-grid{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 250px;
+        gap:26px;
+        align-items:center;
+      }
+
+      .calc-eyebrow{
+        color:var(--lime);
+        font-size:11px;
+        font-weight:800;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:8px;
+      }
+
+      .calc-hero h2{
+        margin:0 0 8px;
+        font-size:30px;
+        letter-spacing:-.04em;
+      }
+
+      .calc-hero p{
+        margin:0;
+        color:var(--muted);
+        max-width:680px;
+        line-height:1.6;
+      }
+
+      .calc-hour-card{
+        padding:20px;
+        border-radius:18px;
+        background:#0b0d0d;
+        border:1px solid rgba(215,255,17,.16);
+      }
+
+      .calc-hour-card span{
+        display:block;
+        color:var(--muted);
+        font-size:11px;
+        margin-bottom:7px;
+      }
+
+      .calc-hour-card strong{
+        font-size:27px;
+        color:var(--lime);
+      }
+
+      .calc-settings{
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:12px;
+        margin-top:20px;
+      }
+
+      .calc-setting{
+        background:#111414;
+        border:1px solid rgba(255,255,255,.07);
+        border-radius:14px;
+        padding:14px;
+      }
+
+      .calc-setting span{
+        display:block;
+        color:var(--muted);
+        font-size:10px;
+        margin-bottom:5px;
+      }
+
+      .calc-setting b{
+        font-size:15px;
+      }
+
+      .calc-products{
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:16px;
+      }
+
+      .calc-product{
+        position:relative;
+        overflow:hidden;
+        text-align:left;
+        padding:0;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:20px;
+        background:#111414;
+        color:#fff;
+        cursor:pointer;
+        transition:.2s ease;
+      }
+
+      .calc-product:hover{
+        transform:translateY(-2px);
+        border-color:rgba(215,255,17,.35);
+      }
+
+      .calc-product-image{
+        height:180px;
+        background:
+          linear-gradient(135deg,#202421,#111313);
+        display:grid;
+        place-items:center;
+        overflow:hidden;
+      }
+
+      .calc-product-image img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+      }
+
+      .calc-product-placeholder{
+        color:var(--muted-2);
+        display:grid;
+        place-items:center;
+        gap:8px;
+        font-size:12px;
+      }
+
+      .calc-product-body{
+        padding:16px;
+        display:grid;
+        gap:8px;
+      }
+
+      .calc-product-top{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+      }
+
+      .calc-category{
+        display:inline-flex;
+        padding:5px 8px;
+        border-radius:999px;
+        background:#202420;
+        color:var(--muted);
+        font-size:10px;
+      }
+
+      .calc-product-body h3{
+        margin:0;
+        font-size:17px;
+      }
+
+      .calc-product-meta{
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        color:var(--muted);
+        font-size:11px;
+      }
+
+      .calc-product-price{
+        display:flex;
+        justify-content:space-between;
+        align-items:end;
+        padding-top:7px;
+        border-top:1px solid rgba(255,255,255,.07);
+      }
+
+      .calc-product-price span{
+        color:var(--muted);
+        font-size:10px;
+      }
+
+      .calc-product-price strong{
+        font-size:18px;
+        color:var(--lime);
+      }
+
+      .calc-empty{
+        padding:48px 20px;
+        text-align:center;
+        color:var(--muted);
+        border:1px dashed rgba(255,255,255,.1);
+        border-radius:18px;
+      }
+
+      .calc-modal{
+        width:min(1080px,calc(100vw - 32px));
+        max-height:calc(100vh - 32px);
+        overflow:auto;
+      }
+
+      .calc-modal-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:15px;
+        margin-bottom:22px;
+      }
+
+      .calc-modal-head h2{
+        margin:0;
+        font-size:25px;
+      }
+
+      .calc-modal-head p{
+        margin:5px 0 0;
+        color:var(--muted);
+        font-size:12px;
+      }
+
+      .calc-step{
+        padding:20px;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:18px;
+        background:#111414;
+        margin-bottom:14px;
+      }
+
+      .calc-step-title{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        margin-bottom:17px;
+      }
+
+      .calc-step-number{
+        width:30px;
+        height:30px;
+        border-radius:10px;
+        display:grid;
+        place-items:center;
+        background:var(--lime);
+        color:#101310;
+        font-size:12px;
+        font-weight:900;
+      }
+
+      .calc-step-title h3{
+        margin:0;
+        font-size:16px;
+      }
+
+      .calc-step-title span{
+        display:block;
+        margin-top:3px;
+        color:var(--muted);
+        font-size:11px;
+      }
+
+      .calc-product-head{
+        display:grid;
+        grid-template-columns:150px minmax(0,1fr);
+        gap:20px;
+        align-items:start;
+      }
+
+      .calc-photo{
+        height:150px;
+        border-radius:17px;
+        overflow:hidden;
+        background:#202420;
+        border:1px solid rgba(255,255,255,.08);
+        position:relative;
+      }
+
+      .calc-photo img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+      }
+
+      .calc-photo-empty{
+        height:100%;
+        display:grid;
+        place-items:center;
+        text-align:center;
+        color:var(--muted);
+        font-size:11px;
+        padding:10px;
+      }
+
+      .calc-photo-upload{
+        position:absolute;
+        inset:auto 8px 8px 8px;
+      }
+
+      .calc-photo-upload label{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:6px;
+        background:rgba(10,12,12,.9);
+        border:1px solid rgba(255,255,255,.1);
+        border-radius:10px;
+        padding:8px;
+        color:#fff;
+        font-size:10px;
+        cursor:pointer;
+      }
+
+      .calc-photo-upload input{
+        display:none;
+      }
+
+      .calc-ingredients{
+        display:grid;
+        gap:9px;
+      }
+
+      .calc-ingredient{
+        display:grid;
+        grid-template-columns:minmax(180px,1fr) 130px 130px 42px;
+        gap:10px;
+        align-items:end;
+        padding:12px;
+        border-radius:13px;
+        background:#0c0f0f;
+        border:1px solid rgba(255,255,255,.06);
+      }
+
+      .calc-cost-grid{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:10px;
+      }
+
+      .calc-cost-card{
+        padding:15px;
+        border-radius:14px;
+        background:#0c0f0f;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .calc-cost-card span{
+        display:block;
+        color:var(--muted);
+        font-size:10px;
+        margin-bottom:7px;
+      }
+
+      .calc-cost-card strong{
+        font-size:17px;
+      }
+
+      .calc-cost-card.highlight{
+        border-color:rgba(215,255,17,.25);
+      }
+
+      .calc-cost-card.highlight strong{
+        color:var(--lime);
+      }
+
+      .calc-price-grid{
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:12px;
+      }
+
+      .calc-price-card{
+        padding:18px;
+        border-radius:16px;
+        background:#0c0f0f;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .calc-price-card span{
+        display:block;
+        color:var(--muted);
+        font-size:10px;
+        margin-bottom:8px;
+      }
+
+      .calc-price-card strong{
+        font-size:23px;
+      }
+
+      .calc-price-card.main{
+        background:
+          linear-gradient(135deg,rgba(215,255,17,.12),rgba(215,255,17,.03));
+        border-color:rgba(215,255,17,.25);
+      }
+
+      .calc-price-card.main strong{
+        color:var(--lime);
+      }
+
+      .calc-ifood{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+        margin-top:12px;
+      }
+
+      .calc-ifood-card{
+        padding:17px;
+        border-radius:16px;
+        background:#0c0f0f;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .calc-ifood-card>div{
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        align-items:center;
+      }
+
+      .calc-ifood-card span{
+        color:var(--muted);
+        font-size:11px;
+      }
+
+      .calc-ifood-card strong{
+        color:var(--lime);
+        font-size:20px;
+      }
+
+      .calc-ifood-card small{
+        display:block;
+        color:var(--muted-2);
+        margin-top:7px;
+        font-size:10px;
+      }
+
+      .calc-summary{
+        display:grid;
+        grid-template-columns:1.2fr repeat(3,1fr);
+        gap:10px;
+      }
+
+      .calc-summary-card{
+        padding:16px;
+        border-radius:14px;
+        background:#111414;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .calc-summary-card span{
+        display:block;
+        color:var(--muted);
+        font-size:10px;
+        margin-bottom:6px;
+      }
+
+      .calc-summary-card strong{
+        font-size:17px;
+      }
+
+      .calc-modal-actions{
+        position:sticky;
+        bottom:0;
+        display:flex;
+        justify-content:flex-end;
+        gap:10px;
+        padding-top:18px;
+        background:linear-gradient(to bottom,transparent,#0b0d0d 22%);
+      }
+
+      @media(max-width:900px){
+        .calc-products{
+          grid-template-columns:repeat(2,minmax(0,1fr));
+        }
+
+        .calc-hero-grid{
+          grid-template-columns:1fr;
+        }
+
+        .calc-settings{
+          grid-template-columns:1fr;
+        }
+
+        .calc-cost-grid{
+          grid-template-columns:repeat(2,minmax(0,1fr));
+        }
+
+        .calc-summary{
+          grid-template-columns:repeat(2,minmax(0,1fr));
+        }
+      }
+
+      @media(max-width:640px){
+        .calc-toolbar{
+          align-items:stretch;
+        }
+
+        .calc-search{
+          max-width:none;
+          min-width:0;
+        }
+
+        .calc-actions{
+          width:100%;
+          display:grid;
+          grid-template-columns:1fr;
+        }
+
+        .calc-actions select{
+          width:100%;
+        }
+
+        .calc-products{
+          grid-template-columns:1fr;
+        }
+
+        .calc-hero{
+          padding:20px;
+          border-radius:18px;
+        }
+
+        .calc-hero h2{
+          font-size:25px;
+        }
+
+        .calc-modal{
+          width:calc(100vw - 18px);
+          max-height:calc(100vh - 18px);
+        }
+
+        .calc-step{
+          padding:15px;
+          border-radius:15px;
+        }
+
+        .calc-product-head{
+          grid-template-columns:1fr;
+        }
+
+        .calc-photo{
+          height:220px;
+        }
+
+        .calc-ingredient{
+          grid-template-columns:1fr 1fr;
+        }
+
+        .calc-ingredient .field:first-child{
+          grid-column:1/-1;
+        }
+
+        .calc-cost-grid,
+        .calc-price-grid,
+        .calc-ifood,
+        .calc-summary{
+          grid-template-columns:1fr;
+        }
+
+        .calc-modal-actions{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+        }
+      }
+    `}</style>
+
+    <div className="calc-page">
+
+      <div className="calc-toolbar">
+        <div className="calc-search">
+          <div className="search-box">
+            <Search size={17}/>
+            <input
+              value={query}
+              onChange={e=>setQuery(e.target.value)}
+              placeholder="Buscar produto ou receita..."
+            />
+          </div>
         </div>
-        <div className="form-grid three">
-          <Field label="Renda mensal desejada">
-            <input type="number" min="0" step="0.01"
-              value={profile?.desired_monthly_income||''}
-              onChange={e=>setProfile({...profile,desired_monthly_income:e.target.value})}/>
-          </Field>
-          <Field label="Horas por dia">
-            <input type="number" min="0" step="0.5"
-              value={profile?.work_hours_per_day||''}
-              onChange={e=>setProfile({...profile,work_hours_per_day:e.target.value})}/>
-          </Field>
-          <Field label="Dias por semana">
-            <input type="number" min="0" step="1"
-              value={profile?.work_days_per_week||''}
-              onChange={e=>setProfile({...profile,work_days_per_week:e.target.value})}/>
-          </Field>
-        </div>
-        <div className="calculator-summary">
-          <span>Sua hora de trabalho</span><b>{money(hourlyRate)}</b>
-          <button className="secondary" onClick={saveLaborSettings} disabled={savingLabor}>
-            {savingLabor?'Salvando…':'Salvar configuração'}
+
+        <div className="calc-actions">
+          <select
+            value={category}
+            onChange={e=>setCategory(e.target.value)}
+          >
+            <option value="Todas">
+              Todas as categorias
+            </option>
+
+            {CATEGORIES.map(c=>
+              <option key={c} value={c}>
+                {c}
+              </option>
+            )}
+          </select>
+
+          <button
+            className="primary"
+            onClick={openNew}
+          >
+            <Plus size={17}/>
+            Nova calculadora
           </button>
         </div>
       </div>
 
-      {filtered.length?<div className="table-wrap">
-        <table><thead><tr><th>Receita</th><th>Categoria</th><th>Rendimento</th><th>Custo total</th><th>Custo/un.</th><th>Preço sugerido</th><th/></tr></thead>
-        <tbody>{filtered.map(r=><tr key={r.id}>
-          <td><b>{r.name}</b></td><td>{r.category}</td>
-          <td>{r.yield_amount} {r.yield_unit}</td>
-          <td>{money(r.cost)}</td><td>{money(r.unit_cost)}</td><td>{money(r.suggested_price)}</td>
-          <td><div className="row-actions">
-            <button className="icon-button" onClick={()=>openEdit(r)}><Edit3 size={15}/></button>
-            <button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button>
-          </div></td>
-        </tr>)}</tbody></table>
-      </div>:<Empty text="Nenhuma receita cadastrada." action="Calcular receita" onClick={openNew}/>}
-    </section>
+      <section className="calc-hero">
+        <div className="calc-hero-grid">
 
-    {open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar receita':'Calcular receita'}>
-      <form className="form" onSubmit={save}>
-        <section className="calculator-section">
-          <div className="section-head"><div><h3>Sua receita</h3><span>Informações básicas da produção.</span></div></div>
-          <div className="form-grid two">
-            <Field label="Nome da receita"><input required value={form.name} onChange={e=>setF('name',e.target.value)} placeholder="Ex.: Bolo de chocolate"/></Field>
-            <Field label="Categoria"><select value={form.category} onChange={e=>setF('category',e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></Field>
-            <Field label="Rendimento"><input type="number" min="0" step="0.01" value={form.yield_amount} onChange={e=>setF('yield_amount',e.target.value)}/></Field>
-            <Field label="Unidade do rendimento"><select value={form.yield_unit} onChange={e=>setF('yield_unit',e.target.value)}><option>un</option><option>fatia</option><option>kg</option><option>g</option><option>ml</option></select></Field>
-            <Field label="Tamanho da porção"><input value={form.portion_size} onChange={e=>setF('portion_size',e.target.value)} placeholder="Ex.: 100 g"/></Field>
-            <Field label="Tempo de produção (minutos)"><input type="number" min="0" value={form.prep_time_minutes} onChange={e=>setF('prep_time_minutes',e.target.value)} placeholder="Ex.: 120"/></Field>
+          <div>
+            <div className="calc-eyebrow">
+              Calculadora de preço
+            </div>
+
+            <h2>
+              Descubra quanto realmente custa
+              o seu produto.
+            </h2>
+
+            <p>
+              Considere ingredientes, sua hora de trabalho,
+              custos adicionais e margem de lucro antes de
+              definir o preço de venda.
+            </p>
+
+            <div className="calc-settings">
+
+              <div className="calc-setting">
+                <span>Renda mensal desejada</span>
+                <b>
+                  {money(profile?.desired_monthly_income)}
+                </b>
+              </div>
+
+              <div className="calc-setting">
+                <span>Jornada</span>
+                <b>
+                  {profile?.work_hours_per_day||0}h/dia
+                  {' • '}
+                  {profile?.work_days_per_week||0} dias
+                </b>
+              </div>
+
+              <div className="calc-setting">
+                <span>Sua hora de trabalho</span>
+                <b>
+                  {money(hourlyRate)}
+                </b>
+              </div>
+
+            </div>
           </div>
-          <label className="field"><span>Foto da receita</span><input type="file" accept="image/*" onChange={upload}/></label>
-          {uploading&&<small>Enviando foto…</small>}
-          {form.photo_url&&<img src={form.photo_url} alt="Receita" style={{maxWidth:180,borderRadius:12}}/>}
-        </section>
 
-        <section className="calculator-section">
-          <div className="section-head">
-            <div><h3>Ingredientes</h3><span>Os custos vêm da sua Despensa.</span></div>
-            <button type="button" className="secondary" onClick={addIngredient}><Plus size={15}/> Ingrediente</button>
+          <div className="calc-hour-card">
+            <span>Valor da sua hora</span>
+            <strong>{money(hourlyRate)}</strong>
+
+            <button
+              className="secondary"
+              style={{
+                width:'100%',
+                marginTop:14
+              }}
+              onClick={saveLaborSettings}
+              disabled={savingLabor}
+            >
+              {savingLabor
+                ? 'Salvando…'
+                : 'Salvar configuração'}
+            </button>
           </div>
 
-          {(form.ingredients||[]).map(item=>{
-            const selected=ingredientsCatalog.find(x=>x.id===item.ingredient_id);
-            const cost=ingredientCost(item);
-            return <div className="calculator-ingredient-row" key={item.id}>
-              <Field label="Ingrediente">
-                <select value={item.ingredient_id||''} onChange={e=>selectIngredient(e.target.value,item.id)}>
-                  <option value="">Selecione da Despensa</option>
-                  {ingredientsCatalog.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
-              </Field>
-              <Field label={`Quantidade${selected?.base_unit?` (${selected.base_unit})`:''}`}>
-                <input type="number" min="0" step="0.001" value={item.quantity}
-                  onChange={e=>updateIngredient(item.id,'quantity',e.target.value)}/>
-              </Field>
-              <Field label="Custo">
-                <input readOnly value={money(cost)} />
-              </Field>
-              <button type="button" className="icon-button danger" onClick={()=>removeIngredient(item.id)}><Trash2 size={15}/></button>
-            </div>;
-          })}
-
-          {!ingredientsCatalog.length&&<div className="mini-note">Cadastre os ingredientes primeiro na Despensa.</div>}
-        </section>
-
-        <section className="calculator-section">
-          <div className="section-head"><div><h3>Seu custo real</h3><span>Ingredientes + sua mão de obra.</span></div></div>
-          <div className="calculator-results">
-            <div><span>Ingredientes</span><b>{money(calc.ingredientTotal)}</b></div>
-            <div><span>Mão de obra</span><b>{money(calc.laborCost)}</b></div>
-            <div><span>Custo total</span><b>{money(calc.totalCost)}</b></div>
-            <div><span>Custo por unidade</span><b>{money(calc.unitCost)}</b></div>
-          </div>
-        </section>
-
-        <section className="calculator-section">
-          <div className="section-head"><div><h3>Quanto cobrar?</h3><span>A margem é calculada sobre o preço final de venda.</span></div></div>
-          <div className="form-grid two">
-            <Field label="Margem desejada (%)"><input type="number" min="0" max="99.99" step="0.01" value={form.desired_margin} onChange={e=>setF('desired_margin',e.target.value)}/></Field>
-            <Field label="Preço de venda sugerido"><input readOnly value={money(calc.suggestedPrice)}/></Field>
-            <Field label="Preço que você vai cobrar"><input type="number" min="0" step="0.01" value={form.sale_price} onChange={e=>setF('sale_price',e.target.value)} placeholder="R$ 0,00"/></Field>
-          </div>
-        </section>
-
-        <section className="calculator-section">
-          <div className="form-grid two">
-            <Field label="Modo de preparo"><textarea rows="5" value={form.preparation} onChange={e=>setF('preparation',e.target.value)}/></Field>
-            <Field label="Observações"><textarea rows="5" value={form.notes} onChange={e=>setF('notes',e.target.value)}/></Field>
-          </div>
-        </section>
-
-        <div className="modal-actions">
-          <button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button>
-          <button className="primary">{editing?'Salvar alterações':'Salvar cálculo'}</button>
         </div>
-      </form>
-    </Modal>}
+      </section>
+
+      <section className="panel">
+        <div className="section-head">
+          <div>
+            <h2>Seus produtos</h2>
+            <span>
+              {filtered.length} produtos encontrados
+            </span>
+          </div>
+        </div>
+
+        {filtered.length ? (
+
+          <div className="calc-products">
+
+            {filtered.map(r=>
+              <article
+                key={r.id}
+                className="calc-product"
+                onClick={()=>openEdit(r)}
+              >
+
+                <div className="calc-product-image">
+
+                  {r.photo_url ? (
+                    <img
+                      src={r.photo_url}
+                      alt={r.name}
+                    />
+                  ) : (
+                    <div className="calc-product-placeholder">
+                      <CakeSlice size={32}/>
+                      <span>
+                        Adicione uma foto
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="calc-product-body">
+
+                  <div className="calc-product-top">
+                    <span className="calc-category">
+                      {r.category}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="icon-button danger"
+                      onClick={e=>{
+                        e.stopPropagation();
+                        remove(r.id);
+                      }}
+                    >
+                      <Trash2 size={14}/>
+                    </button>
+                  </div>
+
+                  <h3>{r.name}</h3>
+
+                  <div className="calc-product-meta">
+                    <span>
+                      Rendimento:
+                      {' '}
+                      {r.yield_amount}
+                      {' '}
+                      {r.yield_unit}
+                    </span>
+
+                    <span>
+                      Custo:
+                      {' '}
+                      {money(r.cost)}
+                    </span>
+                  </div>
+
+                  <div className="calc-product-price">
+                    <span>Preço sugerido</span>
+                    <strong>
+                      {money(r.suggested_price)}
+                    </strong>
+                  </div>
+
+                </div>
+
+              </article>
+            )}
+
+          </div>
+
+        ) : (
+
+          <div className="calc-empty">
+            <CakeSlice size={34}/>
+            <p>
+              Nenhum produto cadastrado ainda.
+            </p>
+
+            <button
+              className="primary"
+              onClick={openNew}
+            >
+              <Plus size={16}/>
+              Criar primeira calculadora
+            </button>
+          </div>
+
+        )}
+
+      </section>
+
+    </div>
+
+    {open&&
+      <div
+        className="modal-bg"
+        onMouseDown={e=>{
+          if(e.target===e.currentTarget){
+            setOpen(false);
+          }
+        }}
+      >
+
+        <div className="modal calc-modal">
+
+          <div className="calc-modal-head">
+            <div>
+              <h2>
+                {editing
+                  ? 'Editar calculadora'
+                  : 'Nova calculadora'}
+              </h2>
+
+              <p>
+                Monte o custo completo e descubra
+                quanto cobrar.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="icon-button"
+              onClick={()=>setOpen(false)}
+            >
+              <X size={18}/>
+            </button>
+          </div>
+
+          <form
+            className="form"
+            onSubmit={save}
+          >
+
+            {/* ETAPA 1 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  01
+                </div>
+
+                <div>
+                  <h3>Produto</h3>
+                  <span>
+                    Nome, categoria, foto e rendimento.
+                  </span>
+                </div>
+              </div>
+
+              <div className="calc-product-head">
+
+                <div className="calc-photo">
+
+                  {form.photo_url ? (
+                    <img
+                      src={form.photo_url}
+                      alt={form.name||'Produto'}
+                    />
+                  ) : (
+                    <div className="calc-photo-empty">
+                      <ImagePlus size={30}/>
+                      <span>
+                        Adicione a foto do produto
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="calc-photo-upload">
+                    <label>
+                      <ImagePlus size={13}/>
+                      {uploading
+                        ? 'Enviando…'
+                        : 'Adicionar foto'}
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={upload}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+
+                </div>
+
+                <div className="form-grid two">
+
+                  <Field label="Nome do produto">
+                    <input
+                      required
+                      value={form.name}
+                      onChange={e=>
+                        setF('name',e.target.value)
+                      }
+                      placeholder="Ex.: Bolo de chocolate"
+                    />
+                  </Field>
+
+                  <Field label="Categoria">
+                    <select
+                      value={form.category}
+                      onChange={e=>
+                        setF('category',e.target.value)
+                      }
+                    >
+                      {CATEGORIES.map(c=>
+                        <option key={c}>
+                          {c}
+                        </option>
+                      )}
+                    </select>
+                  </Field>
+
+                  <Field label="Rendimento">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.yield_amount}
+                      onChange={e=>
+                        setF(
+                          'yield_amount',
+                          e.target.value
+                        )
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Unidade">
+                    <select
+                      value={form.yield_unit}
+                      onChange={e=>
+                        setF(
+                          'yield_unit',
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="un">
+                        Unidade
+                      </option>
+                      <option value="fatia">
+                        Fatia
+                      </option>
+                      <option value="kg">
+                        Kg
+                      </option>
+                      <option value="g">
+                        Gramas
+                      </option>
+                      <option value="ml">
+                        Ml
+                      </option>
+                    </select>
+                  </Field>
+
+                  <Field label="Tamanho da porção">
+                    <input
+                      value={form.portion_size}
+                      onChange={e=>
+                        setF(
+                          'portion_size',
+                          e.target.value
+                        )
+                      }
+                      placeholder="Ex.: 100 g"
+                    />
+                  </Field>
+
+                  <Field label="Tempo de produção">
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.prep_time_minutes}
+                      onChange={e=>
+                        setF(
+                          'prep_time_minutes',
+                          e.target.value
+                        )
+                      }
+                      placeholder="Ex.: 120"
+                    />
+                  </Field>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* ETAPA 2 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  02
+                </div>
+
+                <div>
+                  <h3>Ingredientes</h3>
+                  <span>
+                    Os valores são puxados da sua Despensa.
+                  </span>
+                </div>
+              </div>
+
+              <div className="calc-ingredients">
+
+                {(form.ingredients||[]).map(item=>{
+
+                  const selected=
+                    ingredientsCatalog.find(
+                      x=>x.id===item.ingredient_id
+                    );
+
+                  const cost=
+                    ingredientCost(item);
+
+                  return (
+                    <div
+                      className="calc-ingredient"
+                      key={item.id}
+                    >
+
+                      <Field label="Ingrediente">
+                        <select
+                          value={
+                            item.ingredient_id||''
+                          }
+                          onChange={e=>
+                            selectIngredient(
+                              e.target.value,
+                              item.id
+                            )
+                          }
+                        >
+                          <option value="">
+                            Selecione da Despensa
+                          </option>
+
+                          {ingredientsCatalog.map(i=>
+                            <option
+                              key={i.id}
+                              value={i.id}
+                            >
+                              {i.name}
+                            </option>
+                          )}
+                        </select>
+                      </Field>
+
+                      <Field
+                        label={
+                          selected?.base_unit
+                            ? `Quantidade (${selected.base_unit})`
+                            : 'Quantidade'
+                        }
+                      >
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.001"
+                          value={item.quantity}
+                          onChange={e=>
+                            updateIngredient(
+                              item.id,
+                              'quantity',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </Field>
+
+                      <Field label="Custo">
+                        <input
+                          readOnly
+                          value={money(cost)}
+                        />
+                      </Field>
+
+                      <button
+                        type="button"
+                        className="icon-button danger"
+                        onClick={()=>
+                          removeIngredient(item.id)
+                        }
+                      >
+                        <Trash2 size={15}/>
+                      </button>
+
+                    </div>
+                  );
+                })}
+
+              </div>
+
+              <button
+                type="button"
+                className="secondary"
+                style={{marginTop:12}}
+                onClick={addIngredient}
+              >
+                <Plus size={15}/>
+                Adicionar ingrediente
+              </button>
+
+              {!ingredientsCatalog.length&&
+                <div className="mini-note">
+                  Cadastre os ingredientes primeiro
+                  na Despensa.
+                </div>
+              }
+
+            </section>
+
+            {/* ETAPA 3 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  03
+                </div>
+
+                <div>
+                  <h3>Custos adicionais</h3>
+                  <span>
+                    Inclua gastos que também fazem parte
+                    da produção.
+                  </span>
+                </div>
+              </div>
+
+              <div className="form-grid two">
+
+                <Field label="Embalagem">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={additionalCosts.packaging}
+                    onChange={e=>
+                      setAdditional(
+                        'packaging',
+                        e.target.value
+                      )
+                    }
+                    placeholder="R$ 0,00"
+                  />
+                </Field>
+
+                <Field label="Energia / gás">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={additionalCosts.energy}
+                    onChange={e=>
+                      setAdditional(
+                        'energy',
+                        e.target.value
+                      )
+                    }
+                    placeholder="R$ 0,00"
+                  />
+                </Field>
+
+                <Field label="Entrega / deslocamento">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={additionalCosts.delivery}
+                    onChange={e=>
+                      setAdditional(
+                        'delivery',
+                        e.target.value
+                      )
+                    }
+                    placeholder="R$ 0,00"
+                  />
+                </Field>
+
+                <Field label="Outros custos">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={additionalCosts.other}
+                    onChange={e=>
+                      setAdditional(
+                        'other',
+                        e.target.value
+                      )
+                    }
+                    placeholder="R$ 0,00"
+                  />
+                </Field>
+
+              </div>
+
+            </section>
+
+            {/* ETAPA 4 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  04
+                </div>
+
+                <div>
+                  <h3>Seu custo real</h3>
+                  <span>
+                    Ingredientes + mão de obra + custos adicionais.
+                  </span>
+                </div>
+              </div>
+
+              <div className="calc-cost-grid">
+
+                <div className="calc-cost-card">
+                  <span>Ingredientes</span>
+                  <strong>
+                    {money(calc.ingredientTotal)}
+                  </strong>
+                </div>
+
+                <div className="calc-cost-card">
+                  <span>Mão de obra</span>
+                  <strong>
+                    {money(calc.laborCost)}
+                  </strong>
+                </div>
+
+                <div className="calc-cost-card">
+                  <span>Custos adicionais</span>
+                  <strong>
+                    {money(calc.additionalTotal)}
+                  </strong>
+                </div>
+
+                <div className="calc-cost-card highlight">
+                  <span>Custo total</span>
+                  <strong>
+                    {money(calc.totalCost)}
+                  </strong>
+                </div>
+
+              </div>
+
+              <div
+                className="calc-summary"
+                style={{marginTop:10}}
+              >
+
+                <div className="calc-summary-card">
+                  <span>
+                    Custo por unidade
+                  </span>
+                  <strong>
+                    {money(calc.unitCost)}
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>
+                    Tempo de produção
+                  </span>
+                  <strong>
+                    {calc.prepMinutes} min
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>
+                    Sua hora
+                  </span>
+                  <strong>
+                    {money(hourlyRate)}
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>
+                    Rendimento
+                  </span>
+                  <strong>
+                    {form.yield_amount||0}
+                    {' '}
+                    {form.yield_unit}
+                  </strong>
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* ETAPA 5 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  05
+                </div>
+
+                <div>
+                  <h3>Preço</h3>
+                  <span>
+                    Defina sua margem e veja diferentes
+                    formas de precificar.
+                  </span>
+                </div>
+              </div>
+
+              <div className="form-grid two">
+
+                <Field label="Margem desejada (%)">
+                  <input
+                    type="number"
+                    min="0"
+                    max="99.99"
+                    step="0.01"
+                    value={form.desired_margin}
+                    onChange={e=>
+                      setF(
+                        'desired_margin',
+                        e.target.value
+                      )
+                    }
+                  />
+                </Field>
+
+                <Field label="Preço que você vai cobrar">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.sale_price}
+                    onChange={e=>
+                      setF(
+                        'sale_price',
+                        e.target.value
+                      )
+                    }
+                    placeholder={
+                      money(calc.psychologicalPrice)
+                    }
+                  />
+                </Field>
+
+              </div>
+
+              <div className="calc-price-grid">
+
+                <div className="calc-price-card main">
+                  <span>
+                    Preço sugerido
+                  </span>
+                  <strong>
+                    {money(calc.suggestedPrice)}
+                  </strong>
+                </div>
+
+                <div className="calc-price-card">
+                  <span>
+                    Preço arredondado
+                  </span>
+                  <strong>
+                    {money(calc.roundedPrice)}
+                  </strong>
+                </div>
+
+                <div className="calc-price-card">
+                  <span>
+                    Preço psicológico
+                  </span>
+                  <strong>
+                    {money(calc.psychologicalPrice)}
+                  </strong>
+                </div>
+
+              </div>
+
+              <div className="calc-ifood">
+
+                <div className="calc-ifood-card">
+                  <div>
+                    <span>
+                      iFood • 15,2%
+                    </span>
+
+                    <strong>
+                      {money(calc.ifoodBasic)}
+                    </strong>
+                  </div>
+
+                  <small>
+                    Valor aproximado para preservar
+                    o preço líquido desejado.
+                  </small>
+                </div>
+
+                <div className="calc-ifood-card">
+                  <div>
+                    <span>
+                      iFood • 26,2%
+                    </span>
+
+                    <strong>
+                      {money(calc.ifoodDelivery)}
+                    </strong>
+                  </div>
+
+                  <small>
+                    Valor aproximado considerando
+                    a taxa de 26,2%.
+                  </small>
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* ETAPA 6 */}
+
+            <section className="calc-step">
+
+              <div className="calc-step-title">
+                <div className="calc-step-number">
+                  06
+                </div>
+
+                <div>
+                  <h3>Resumo</h3>
+                  <span>
+                    Confira tudo antes de salvar.
+                  </span>
+                </div>
+              </div>
+
+              <div className="calc-summary">
+
+                <div className="calc-summary-card">
+                  <span>Produto</span>
+                  <strong>
+                    {form.name||'—'}
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>Custo total</span>
+                  <strong>
+                    {money(calc.totalCost)}
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>Margem</span>
+                  <strong>
+                    {Number(form.desired_margin||0).toFixed(1)}%
+                  </strong>
+                </div>
+
+                <div className="calc-summary-card">
+                  <span>Preço final sugerido</span>
+                  <strong>
+                    {money(
+                      calc.psychologicalPrice
+                    )}
+                  </strong>
+                </div>
+
+              </div>
+
+            </section>
+
+            <section className="calc-step">
+
+              <div className="form-grid two">
+
+                <Field label="Modo de preparo">
+                  <textarea
+                    rows="5"
+                    value={form.preparation}
+                    onChange={e=>
+                      setF(
+                        'preparation',
+                        e.target.value
+                      )
+                    }
+                  />
+                </Field>
+
+                <Field label="Observações">
+                  <textarea
+                    rows="5"
+                    value={form.notes}
+                    onChange={e=>
+                      setF(
+                        'notes',
+                        e.target.value
+                      )
+                    }
+                  />
+                </Field>
+
+              </div>
+
+            </section>
+
+            <div className="calc-modal-actions">
+
+              <button
+                type="button"
+                className="secondary"
+                onClick={()=>setOpen(false)}
+              >
+                Cancelar
+              </button>
+
+              <button className="primary">
+                {editing
+                  ? 'Salvar alterações'
+                  : 'Salvar calculadora'}
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+    }
+
   </>;
 }
 
