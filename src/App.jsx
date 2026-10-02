@@ -4051,30 +4051,45 @@ async function generateArt(){
             </div>
 
 
-            <div className="marketing-ai-art">
+           <div className="marketing-ai-art">
 
-              <div className="marketing-ai-art-product">
-                <CakeSlice size={105}/>
-              </div>
+  {generatedImage ? (
+    <img
+      src={generatedImage}
+      alt={`Arte criada para ${profile?.business_name||'Minha Confeitaria'}`}
+      className="marketing-ai-generated-image"
+    />
+  ) : (
+    <>
+      <div className="marketing-ai-art-product">
+        <CakeSlice size={105}/>
+      </div>
 
-              <div className="marketing-ai-art-copy">
+      <div className="marketing-ai-art-copy">
 
-                <small>
-                  {profile?.business_name||'MINHA CONFEITARIA'}
-                </small>
+        <small>
+          {profile?.business_name||'MINHA CONFEITARIA'}
+        </small>
 
-                <h3>
-                  {artText||'Momentos especiais.'}
-                </h3>
+        <h3>
+          {artText||'Momentos especiais.'}
+        </h3>
 
-                <p>
-                  Bolos feitos com carinho para celebrar.
-                </p>
+        <p>
+          Bolos feitos com carinho para celebrar.
+        </p>
 
-              </div>
+      </div>
+    </>
+  )}
 
-            </div>
+</div>
 
+{generationError&&(
+  <div className="marketing-ai-generation-error">
+    {generationError}
+  </div>
+)}
 
             <div className="marketing-ai-preview-actions">
 
