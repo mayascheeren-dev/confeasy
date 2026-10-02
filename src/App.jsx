@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import html2canvas from 'html2canvas';
 
 import {
   ArrowRight, Bell, CakeSlice, Calculator, CheckCircle2, ChevronRight,
@@ -3393,6 +3394,9 @@ function Marketing({profile,setPage}){
   const [artText,setArtText]=useState(
     'Bolos feitos para momentos especiais'
   );
+  const [savingCreation,setSavingCreation]=useState(false);
+  const [saveMessage,setSaveMessage]=useState('');
+  const artRef=useRef(null);
 
   const [products,setProducts]=useState([]);
   const [selectedProductId,setSelectedProductId]=useState('');
@@ -3510,6 +3514,139 @@ Não invente informações sobre o negócio que não foram fornecidas.`
         text:'Não consegui conectar com a IA neste momento. Tente novamente em alguns instantes.'
       }
     ]);
+
+  }
+  }
+
+  async function saveCreation(){
+
+  if(!artRef.current){
+    setSaveMessage('Não foi possível preparar a criação.');
+    return;
+  }
+
+  setSavingCreation(true);
+  setSaveMessage('');
+
+  try{
+
+    const product=products.find(
+      item=>String(item.id)===String(selectedProductId)
+    );
+
+    if(!product){
+      throw new Error('Selecione um produto antes de salvar.');
+    }
+
+    const {
+      data:{user},
+      error:userError
+    }=await supabase.auth.getUser();
+
+    if(userError||!user){
+      throw new Error('Não foi possível identificar sua conta.');
+    }
+
+    const preview=artRef.current;
+
+    const dimensions=
+      format==='Feed'
+        ? {width:1080,height:1350}
+        : format==='Story'
+          ? {width:1080,height:1920}
+          : {width:1080,height:1080};
+
+    const previewWidth=preview.getBoundingClientRect().width;
+
+    const capture=await html2canvas(
+      preview,
+      {
+        backgroundColor:null,
+        useCORS:true,
+        scale:dimensions.width/previewWidth,
+        logging:false
+      }
+    );
+
+    const finalCanvas=document.createElement('canvas');
+
+    finalCanvas.width=dimensions.width;
+    finalCanvas.height=dimensions.height;
+
+    const context=finalCanvas.getContext('2d');
+
+    if(!context){
+      throw new Error('Não foi possível preparar a imagem.');
+    }
+
+    context.drawImage(
+      capture,
+      0,
+      0,
+      dimensions.width,
+      dimensions.height
+    );
+
+    const blob=await new Promise(resolve=>{
+      finalCanvas.toBlob(
+        resolve,
+        'image/png'
+      );
+    });
+
+    if(!blob){
+      throw new Error('Não foi possível gerar a imagem.');
+    }
+
+    const filePath=
+      `${user.id}/${crypto.randomUUID()}.png`;
+
+    const {error:uploadError}=await supabase
+      .storage
+      .from('marketing-creations')
+      .upload(
+        filePath,
+        blob,
+        {
+          contentType:'image/png',
+          upsert:false
+        }
+      );
+
+    if(uploadError){
+      throw uploadError;
+    }
+
+    const {error:insertError}=await supabase
+      .from('marketing_creations')
+      .insert({
+        user_id:user.id,
+        product_id:product.id,
+        product_name:product.name,
+        format,
+        style,
+        art_text:artText,
+        image_url:filePath
+      });
+
+    if(insertError){
+      throw insertError;
+    }
+
+    setSaveMessage('Criação salva com sucesso!');
+
+  }catch(error){
+
+    console.error(error);
+
+    setSaveMessage(
+      error?.message||
+      'Não foi possível salvar a criação.'
+    );
+
+  }finally{
+
+    setSavingCreation(false);
 
   }
 }
@@ -4144,7 +4281,10 @@ Não invente informações sobre o negócio que não foram fornecidas.`
             </div>
 
 
-           <div className="marketing-ai-art">
+           <div
+  className="marketing-ai-art"
+  ref={artRef}
+>
 
   <div className="marketing-ai-art-product">
  {artPhoto ? (
@@ -4179,14 +4319,21 @@ Não invente informações sobre o negócio que não foram fornecidas.`
             <div className="marketing-ai-preview-actions">
 
   <button
-    type="button"
-    className="primary"
-  >
-    <Check size={15}/>
-    Salvar criação
-  </button>
+  type="button"
+  className="primary"
+  onClick={saveCreation}
+  disabled={savingCreation}
+>
+  <Check size={15}/>
+  {savingCreation ? 'Salvando...' : 'Salvar criação'}
+</button>
 
 </div>
+            {saveMessage&&(
+  <div className="marketing-ai-save-message">
+    {saveMessage}
+  </div>
+)}
 
           </div>
 
