@@ -4178,25 +4178,15 @@ Não invente informações sobre o negócio que não foram fornecidas.`
 
             <div className="marketing-ai-preview-actions">
 
-              <button type="button">
-                <WandSparkles size={15}/>
-                Gerar outra
-              </button>
+  <button
+    type="button"
+    className="primary"
+  >
+    <Check size={15}/>
+    Salvar criação
+  </button>
 
-              <button type="button">
-                <Pencil size={15}/>
-                Editar
-              </button>
-
-              <button
-                type="button"
-                className="primary"
-              >
-                <Check size={15}/>
-                Usar criação
-              </button>
-
-            </div>
+</div>
 
           </div>
 
