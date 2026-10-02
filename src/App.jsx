@@ -3380,13 +3380,9 @@ function Pantry({session,notify}){
 
 function Marketing({profile,setPage}){
 
-  const [savingCreation,setSavingCreation]=useState(false);
-const [saveMessage,setSaveMessage]=useState('');
-const artRef=useRef(null);
-
-const [creations,setCreations]=useState([]);
-
-const [products,setProducts]=useState([]);
+  const [activeTab,setActiveTab]=useState('assistant');
+  const [message,setMessage]=useState('');
+  const [messages,setMessages]=useState([
     {
       role:'ai',
       text:`Olá, ${profile?.full_name?.split(' ')[0]||'confeiteira'}! Sou a assistente da sua confeitaria. Posso ajudar você com receitas, marketing, promoções, clientes e muito mais.`
@@ -3398,9 +3394,12 @@ const [products,setProducts]=useState([]);
   const [artText,setArtText]=useState(
     'Bolos feitos para momentos especiais'
   );
+
   const [savingCreation,setSavingCreation]=useState(false);
   const [saveMessage,setSaveMessage]=useState('');
   const artRef=useRef(null);
+
+  const [creations,setCreations]=useState([]);
 
   const [products,setProducts]=useState([]);
   const [selectedProductId,setSelectedProductId]=useState('');
