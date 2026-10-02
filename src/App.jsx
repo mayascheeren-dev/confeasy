@@ -1091,598 +1091,929 @@ prepMinutes
 
   return <>
     <style>{`
-      .calc-page{
-        display:grid;
-        gap:20px;
-      }
-
-      .calc-toolbar{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:14px;
-        flex-wrap:wrap;
-      }
-
-      .calc-search{
-        flex:1;
-        min-width:240px;
-        max-width:560px;
-      }
-
-      .calc-search .search-box{
-        width:100%;
-      }
-
-      .calc-actions{
-        display:flex;
-        gap:10px;
-        align-items:center;
-      }
-
-      .calc-actions select{
-        min-width:170px;
-      }
-
-      .calc-hero{
-        position:relative;
-        overflow:hidden;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:24px;
-        padding:28px;
-        background:
-          radial-gradient(circle at 85% 10%,rgba(215,255,17,.12),transparent 34%),
-          linear-gradient(135deg,#171a18,#0f1111);
-      }
-
-      .calc-hero-grid{
-        display:grid;
-        grid-template-columns:minmax(0,1fr) 250px;
-        gap:26px;
-        align-items:center;
-      }
-
-      .calc-eyebrow{
-        color:var(--lime);
-        font-size:11px;
-        font-weight:800;
-        letter-spacing:.14em;
-        text-transform:uppercase;
-        margin-bottom:8px;
-      }
-
-      .calc-hero h2{
-        margin:0 0 8px;
-        font-size:30px;
-        letter-spacing:-.04em;
-      }
-
-      .calc-hero p{
-        margin:0;
-        color:var(--muted);
-        max-width:680px;
-        line-height:1.6;
-      }
-
-      .calc-hour-card{
-        padding:20px;
-        border-radius:18px;
-        background:#0b0d0d;
-        border:1px solid rgba(215,255,17,.16);
-      }
-
-      .calc-hour-card span{
-        display:block;
-        color:var(--muted);
-        font-size:11px;
-        margin-bottom:7px;
-      }
-
-      .calc-hour-card strong{
-        font-size:27px;
-        color:var(--lime);
-      }
-
-      .calc-settings{
-        display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:12px;
-        margin-top:20px;
-      }
-
-      .calc-setting{
-        background:#111414;
-        border:1px solid rgba(255,255,255,.07);
-        border-radius:14px;
-        padding:14px;
-      }
-
-      .calc-setting span{
-        display:block;
-        color:var(--muted);
-        font-size:10px;
-        margin-bottom:5px;
-      }
-
-      .calc-setting b{
-        font-size:15px;
-      }
-
-      .calc-products{
-        display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:16px;
-      }
-
-      .calc-product{
-        position:relative;
-        overflow:hidden;
-        text-align:left;
-        padding:0;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:20px;
-        background:#111414;
-        color:#fff;
-        cursor:pointer;
-        transition:.2s ease;
-      }
-
-      .calc-product:hover{
-        transform:translateY(-2px);
-        border-color:rgba(215,255,17,.35);
-      }
-
-      .calc-product-image{
-        height:180px;
-        background:
-          linear-gradient(135deg,#202421,#111313);
-        display:grid;
-        place-items:center;
-        overflow:hidden;
-      }
-
-      .calc-product-image img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-      }
-
-      .calc-product-placeholder{
-        color:var(--muted-2);
-        display:grid;
-        place-items:center;
-        gap:8px;
-        font-size:12px;
-      }
-
-      .calc-product-body{
-        padding:16px;
-        display:grid;
-        gap:8px;
-      }
-
-      .calc-product-top{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-      }
-
-      .calc-category{
-        display:inline-flex;
-        padding:5px 8px;
-        border-radius:999px;
-        background:#202420;
-        color:var(--muted);
-        font-size:10px;
-      }
-
-      .calc-product-body h3{
-        margin:0;
-        font-size:17px;
-      }
-
-      .calc-product-meta{
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        color:var(--muted);
-        font-size:11px;
-      }
-
-      .calc-product-price{
-        display:flex;
-        justify-content:space-between;
-        align-items:end;
-        padding-top:7px;
-        border-top:1px solid rgba(255,255,255,.07);
-      }
-
-      .calc-product-price span{
-        color:var(--muted);
-        font-size:10px;
-      }
-
-      .calc-product-price strong{
-        font-size:18px;
-        color:var(--lime);
-      }
-
-      .calc-empty{
-        padding:48px 20px;
-        text-align:center;
-        color:var(--muted);
-        border:1px dashed rgba(255,255,255,.1);
-        border-radius:18px;
-      }
-
-      .calc-modal{
-        width:min(1080px,calc(100vw - 32px));
-        max-height:calc(100vh - 32px);
-        overflow:auto;
-      }
-
-      .calc-modal-head{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:15px;
-        margin-bottom:22px;
-      }
-
-      .calc-modal-head h2{
-        margin:0;
-        font-size:25px;
-      }
-
-      .calc-modal-head p{
-        margin:5px 0 0;
-        color:var(--muted);
-        font-size:12px;
-      }
-
-      .calc-step{
-        padding:20px;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:18px;
-        background:#111414;
-        margin-bottom:14px;
-      }
-
-      .calc-step-title{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        margin-bottom:17px;
-      }
-
-      .calc-step-number{
-        width:30px;
-        height:30px;
-        border-radius:10px;
-        display:grid;
-        place-items:center;
-        background:var(--lime);
-        color:#101310;
-        font-size:12px;
-        font-weight:900;
-      }
-
-      .calc-step-title h3{
-        margin:0;
-        font-size:16px;
-      }
-
-      .calc-step-title span{
-        display:block;
-        margin-top:3px;
-        color:var(--muted);
-        font-size:11px;
-      }
-
-      .calc-product-head{
-        display:grid;
-        grid-template-columns:150px minmax(0,1fr);
-        gap:20px;
-        align-items:start;
-      }
-
-      .calc-photo{
-        height:150px;
-        border-radius:17px;
-        overflow:hidden;
-        background:#202420;
-        border:1px solid rgba(255,255,255,.08);
-        position:relative;
-      }
-
-      .calc-photo img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-      }
-
-      .calc-photo-empty{
-        height:100%;
-        display:grid;
-        place-items:center;
-        text-align:center;
-        color:var(--muted);
-        font-size:11px;
-        padding:10px;
-      }
-
-      .calc-photo-upload{
-        position:absolute;
-        inset:auto 8px 8px 8px;
-      }
-
-      .calc-photo-upload label{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:6px;
-        background:rgba(10,12,12,.9);
-        border:1px solid rgba(255,255,255,.1);
-        border-radius:10px;
-        padding:8px;
-        color:#fff;
-        font-size:10px;
-        cursor:pointer;
-      }
-
-      .calc-photo-upload input{
-        display:none;
-      }
-
-      .calc-ingredients{
-        display:grid;
-        gap:9px;
-      }
-
-      .calc-ingredient{
-        display:grid;
-        grid-template-columns:minmax(180px,1fr) 130px 130px 42px;
-        gap:10px;
-        align-items:end;
-        padding:12px;
-        border-radius:13px;
-        background:#0c0f0f;
-        border:1px solid rgba(255,255,255,.06);
-      }
-
-      .calc-cost-grid{
-        display:grid;
-        grid-template-columns:repeat(4,minmax(0,1fr));
-        gap:10px;
-      }
-
-      .calc-cost-card{
-        padding:15px;
-        border-radius:14px;
-        background:#0c0f0f;
-        border:1px solid rgba(255,255,255,.07);
-      }
-
-      .calc-cost-card span{
-        display:block;
-        color:var(--muted);
-        font-size:10px;
-        margin-bottom:7px;
-      }
-
-      .calc-cost-card strong{
-        font-size:17px;
-      }
-
-      .calc-cost-card.highlight{
-        border-color:rgba(215,255,17,.25);
-      }
-
-      .calc-cost-card.highlight strong{
-        color:var(--lime);
-      }
-
-      .calc-price-grid{
-        display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:12px;
-      }
-
-      .calc-price-card{
-        padding:18px;
-        border-radius:16px;
-        background:#0c0f0f;
-        border:1px solid rgba(255,255,255,.07);
-      }
-
-      .calc-price-card span{
-        display:block;
-        color:var(--muted);
-        font-size:10px;
-        margin-bottom:8px;
-      }
-
-      .calc-price-card strong{
-        font-size:23px;
-      }
-
-      .calc-price-card.main{
-        background:
-          linear-gradient(135deg,rgba(215,255,17,.12),rgba(215,255,17,.03));
-        border-color:rgba(215,255,17,.25);
-      }
-
-      .calc-price-card.main strong{
-        color:var(--lime);
-      }
-
-      .calc-ifood{
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:12px;
-        margin-top:12px;
-      }
-
-      .calc-ifood-card{
-        padding:17px;
-        border-radius:16px;
-        background:#0c0f0f;
-        border:1px solid rgba(255,255,255,.07);
-      }
-
-      .calc-ifood-card>div{
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        align-items:center;
-      }
-
-      .calc-ifood-card span{
-        color:var(--muted);
-        font-size:11px;
-      }
-
-      .calc-ifood-card strong{
-        color:var(--lime);
-        font-size:20px;
-      }
-
-      .calc-ifood-card small{
-        display:block;
-        color:var(--muted-2);
-        margin-top:7px;
-        font-size:10px;
-      }
-
-      .calc-summary{
-        display:grid;
-        grid-template-columns:1.2fr repeat(3,1fr);
-        gap:10px;
-      }
-
-      .calc-summary-card{
-        padding:16px;
-        border-radius:14px;
-        background:#111414;
-        border:1px solid rgba(255,255,255,.07);
-      }
-
-      .calc-summary-card span{
-        display:block;
-        color:var(--muted);
-        font-size:10px;
-        margin-bottom:6px;
-      }
-
-      .calc-summary-card strong{
-        font-size:17px;
-      }
-
-      .calc-modal-actions{
-        position:sticky;
-        bottom:0;
-        display:flex;
-        justify-content:flex-end;
-        gap:10px;
-        padding-top:18px;
-        background:linear-gradient(to bottom,transparent,#0b0d0d 22%);
-      }
-
-      @media(max-width:900px){
-        .calc-products{
-          grid-template-columns:repeat(2,minmax(0,1fr));
-        }
-
-        .calc-hero-grid{
-          grid-template-columns:1fr;
-        }
-
-        .calc-settings{
-          grid-template-columns:1fr;
-        }
-
-        .calc-cost-grid{
-          grid-template-columns:repeat(2,minmax(0,1fr));
-        }
-
-        .calc-summary{
-          grid-template-columns:repeat(2,minmax(0,1fr));
-        }
-      }
-
-      @media(max-width:640px){
-        .calc-toolbar{
-          align-items:stretch;
-        }
-
-        .calc-search{
-          max-width:none;
-          min-width:0;
-        }
-
-        .calc-actions{
-          width:100%;
-          display:grid;
-          grid-template-columns:1fr;
-        }
-
-        .calc-actions select{
-          width:100%;
-        }
-
-        .calc-products{
-          grid-template-columns:1fr;
-        }
-
-        .calc-hero{
-          padding:20px;
-          border-radius:18px;
-        }
-
-        .calc-hero h2{
-          font-size:25px;
-        }
-
-        .calc-modal{
-          width:calc(100vw - 18px);
-          max-height:calc(100vh - 18px);
-        }
-
-        .calc-step{
-          padding:15px;
-          border-radius:15px;
-        }
-
-        .calc-product-head{
-          grid-template-columns:1fr;
-        }
-
-        .calc-photo{
-          height:220px;
-        }
-
-        .calc-ingredient{
-          grid-template-columns:1fr 1fr;
-        }
-
-        .calc-ingredient .field:first-child{
-          grid-column:1/-1;
-        }
-
-        .calc-cost-grid,
-        .calc-price-grid,
-        .calc-ifood,
-        .calc-summary{
-          grid-template-columns:1fr;
-        }
-
-        .calc-modal-actions{
-          display:grid;
-          grid-template-columns:1fr 1fr;
-        }
-      }
-    `}</style>
+  /* =========================================================
+     CONFEASY — CALCULADORA
+     Layout premium + desktop + mobile
+  ========================================================= */
+
+  .calc-page{
+    display:grid;
+    gap:22px;
+    width:100%;
+  }
+
+  /* =========================
+     BARRA SUPERIOR
+  ========================= */
+
+  .calc-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:14px;
+  }
+
+  .calc-search{
+    min-width:0;
+    max-width:680px;
+  }
+
+  .calc-search .search-box{
+    width:100%;
+    min-height:48px;
+    border-radius:14px;
+  }
+
+  .calc-search .search-box input{
+    min-width:0;
+    width:100%;
+  }
+
+  .calc-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .calc-actions select{
+    min-width:190px;
+    min-height:48px;
+  }
+
+  .calc-actions .primary{
+    min-height:48px;
+    white-space:nowrap;
+  }
+
+  /* =========================
+     HERO
+  ========================= */
+
+  .calc-hero{
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    padding:30px;
+    background:
+      radial-gradient(
+        circle at 90% 0%,
+        rgba(215,255,17,.16),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 55% 100%,
+        rgba(255,255,255,.025),
+        transparent 40%
+      ),
+      linear-gradient(135deg,#181b19,#0d0f0f);
+    box-shadow:0 18px 50px rgba(0,0,0,.18);
+  }
+
+  .calc-hero::after{
+    content:'';
+    position:absolute;
+    width:260px;
+    height:260px;
+    right:-120px;
+    bottom:-150px;
+    border-radius:50%;
+    background:rgba(215,255,17,.06);
+    pointer-events:none;
+  }
+
+  .calc-hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 250px;
+    gap:28px;
+    align-items:center;
+  }
+
+  .calc-eyebrow{
+    color:var(--lime);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom:9px;
+  }
+
+  .calc-hero h2{
+    max-width:700px;
+    margin:0 0 10px;
+    font-size:32px;
+    line-height:1.08;
+    letter-spacing:-.045em;
+  }
+
+  .calc-hero p{
+    max-width:690px;
+    margin:0;
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.65;
+  }
+
+  .calc-settings{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:22px;
+  }
+
+  .calc-setting{
+    min-width:0;
+    padding:14px 15px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:14px;
+    background:rgba(255,255,255,.025);
+  }
+
+  .calc-setting span{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:10px;
+  }
+
+  .calc-setting b{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:14px;
+  }
+
+  .calc-hour-card{
+    padding:20px;
+    border:1px solid rgba(215,255,17,.18);
+    border-radius:18px;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(215,255,17,.09),
+        rgba(255,255,255,.025)
+      );
+  }
+
+  .calc-hour-card span{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  .calc-hour-card strong{
+    display:block;
+    color:var(--lime);
+    font-size:29px;
+    line-height:1.1;
+    letter-spacing:-.04em;
+  }
+
+  .calc-hour-card .secondary{
+    width:100%;
+    margin-top:15px;
+  }
+
+  /* =========================
+     PRODUTOS
+  ========================= */
+
+  .calc-products{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .calc-product{
+    position:relative;
+    overflow:hidden;
+    padding:0;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:20px;
+    background:#111414;
+    color:#fff;
+    text-align:left;
+    cursor:pointer;
+    transition:
+      transform .2s ease,
+      border-color .2s ease,
+      box-shadow .2s ease;
+  }
+
+  .calc-product:hover{
+    transform:translateY(-3px);
+    border-color:rgba(215,255,17,.30);
+    box-shadow:0 15px 35px rgba(0,0,0,.18);
+  }
+
+  .calc-product-image{
+    height:185px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    background:
+      radial-gradient(
+        circle at 50% 20%,
+        rgba(215,255,17,.06),
+        transparent 45%
+      ),
+      linear-gradient(135deg,#202421,#101212);
+  }
+
+  .calc-product-image img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .calc-product-placeholder{
+    display:grid;
+    place-items:center;
+    gap:8px;
+    color:var(--muted-2);
+    font-size:11px;
+  }
+
+  .calc-product-body{
+    display:grid;
+    gap:10px;
+    padding:17px;
+  }
+
+  .calc-product-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .calc-category{
+    display:inline-flex;
+    width:max-content;
+    max-width:75%;
+    padding:5px 9px;
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:999px;
+    background:#202420;
+    color:var(--muted);
+    font-size:9px;
+    font-weight:700;
+  }
+
+  .calc-product-body h3{
+    margin:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:17px;
+    letter-spacing:-.02em;
+  }
+
+  .calc-product-meta{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    color:var(--muted);
+    font-size:10px;
+  }
+
+  .calc-product-meta span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .calc-product-price{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px;
+    padding-top:11px;
+    border-top:1px solid rgba(255,255,255,.07);
+  }
+
+  .calc-product-price span{
+    color:var(--muted);
+    font-size:9px;
+  }
+
+  .calc-product-price strong{
+    color:var(--lime);
+    font-size:19px;
+    letter-spacing:-.03em;
+  }
+
+  .calc-empty{
+    display:grid;
+    justify-items:center;
+    gap:10px;
+    padding:55px 20px;
+    border:1px dashed rgba(255,255,255,.12);
+    border-radius:18px;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  /* =========================
+     MODAL
+  ========================= */
+
+  .calc-modal{
+    width:min(1120px,calc(100vw - 32px));
+    max-height:calc(100vh - 32px);
+    overflow:auto;
+    padding:26px;
+    border-radius:22px;
+  }
+
+  .calc-modal-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .calc-modal-head h2{
+    margin:0;
+    font-size:25px;
+    letter-spacing:-.035em;
+  }
+
+  .calc-modal-head p{
+    margin:5px 0 0;
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  /* =========================
+     ETAPAS
+  ========================= */
+
+  .calc-step{
+    position:relative;
+    padding:20px;
+    margin-bottom:13px;
+    border:1px solid rgba(255,255,255,.075);
+    border-radius:18px;
+    background:#111414;
+  }
+
+  .calc-step-title{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin-bottom:17px;
+  }
+
+  .calc-step-number{
+    flex:0 0 32px;
+    width:32px;
+    height:32px;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    background:var(--lime);
+    color:#101310;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .calc-step-title h3{
+    margin:0;
+    font-size:15px;
+    letter-spacing:-.015em;
+  }
+
+  .calc-step-title span{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:10px;
+  }
+
+  /* =========================
+     PRODUTO + FOTO
+  ========================= */
+
+  .calc-product-head{
+    display:grid;
+    grid-template-columns:170px minmax(0,1fr);
+    gap:22px;
+    align-items:start;
+  }
+
+  .calc-photo{
+    position:relative;
+    height:170px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:17px;
+    background:#202420;
+  }
+
+  .calc-photo img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+  }
+
+  .calc-photo-empty{
+    height:100%;
+    display:grid;
+    place-items:center;
+    align-content:center;
+    gap:8px;
+    padding:12px;
+    color:var(--muted);
+    font-size:10px;
+    text-align:center;
+  }
+
+  .calc-photo-upload{
+    position:absolute;
+    right:8px;
+    bottom:8px;
+    left:8px;
+  }
+
+  .calc-photo-upload label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:8px;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;
+    background:rgba(10,12,12,.90);
+    color:#fff;
+    font-size:10px;
+    cursor:pointer;
+    backdrop-filter:blur(8px);
+  }
+
+  .calc-photo-upload input{
+    display:none;
+  }
+
+  /* =========================
+     INGREDIENTES
+  ========================= */
+
+  .calc-ingredients{
+    display:grid;
+    gap:8px;
+  }
+
+  .calc-ingredient{
+    display:grid;
+    grid-template-columns:minmax(200px,1fr) 130px 130px 42px;
+    gap:10px;
+    align-items:end;
+    padding:11px;
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:13px;
+    background:#0c0f0f;
+  }
+
+  .calc-ingredient .field{
+    min-width:0;
+  }
+
+  /* =========================
+     CUSTOS
+  ========================= */
+
+  .calc-cost-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .calc-cost-card{
+    min-width:0;
+    padding:16px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:14px;
+    background:#0c0f0f;
+  }
+
+  .calc-cost-card span{
+    display:block;
+    margin-bottom:7px;
+    color:var(--muted);
+    font-size:9px;
+  }
+
+  .calc-cost-card strong{
+    font-size:17px;
+    letter-spacing:-.02em;
+  }
+
+  .calc-cost-card.highlight{
+    border-color:rgba(215,255,17,.28);
+    background:
+      linear-gradient(
+        135deg,
+        rgba(215,255,17,.08),
+        rgba(215,255,17,.02)
+      );
+  }
+
+  .calc-cost-card.highlight strong{
+    color:var(--lime);
+  }
+
+  /* =========================
+     RESUMO
+  ========================= */
+
+  .calc-summary{
+    display:grid;
+    grid-template-columns:1.25fr repeat(3,1fr);
+    gap:10px;
+  }
+
+  .calc-summary-card{
+    min-width:0;
+    padding:15px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:14px;
+    background:#111414;
+  }
+
+  .calc-summary-card span{
+    display:block;
+    overflow:hidden;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:9px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .calc-summary-card strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:16px;
+  }
+
+  /* =========================
+     PREÇOS
+  ========================= */
+
+  .calc-price-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    margin-top:15px;
+  }
+
+  .calc-price-card{
+    min-width:0;
+    padding:19px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:16px;
+    background:#0c0f0f;
+  }
+
+  .calc-price-card span{
+    display:block;
+    margin-bottom:8px;
+    color:var(--muted);
+    font-size:9px;
+  }
+
+  .calc-price-card strong{
+    display:block;
+    overflow:hidden;
+    color:#fff;
+    font-size:24px;
+    line-height:1;
+    letter-spacing:-.04em;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .calc-price-card.main{
+    position:relative;
+    overflow:hidden;
+    border-color:rgba(215,255,17,.30);
+    background:
+      radial-gradient(
+        circle at 100% 0%,
+        rgba(215,255,17,.13),
+        transparent 45%
+      ),
+      linear-gradient(
+        135deg,
+        rgba(215,255,17,.10),
+        rgba(215,255,17,.025)
+      );
+  }
+
+  .calc-price-card.main::after{
+    content:'RECOMENDADO';
+    position:absolute;
+    top:10px;
+    right:10px;
+    padding:4px 6px;
+    border-radius:999px;
+    background:rgba(215,255,17,.12);
+    color:var(--lime);
+    font-size:7px;
+    font-weight:900;
+    letter-spacing:.08em;
+  }
+
+  .calc-price-card.main strong{
+    color:var(--lime);
+  }
+
+  /* =========================
+     IFOOD
+  ========================= */
+
+  .calc-ifood{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin-top:12px;
+  }
+
+  .calc-ifood-card{
+    min-width:0;
+    padding:17px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:16px;
+    background:#0c0f0f;
+    transition:
+      border-color .2s ease,
+      background .2s ease,
+      transform .2s ease;
+  }
+
+  .calc-ifood-card:hover{
+    transform:translateY(-1px);
+    border-color:rgba(215,255,17,.25);
+  }
+
+  .calc-ifood-card>div{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .calc-ifood-card span{
+    color:var(--muted);
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .calc-ifood-card strong{
+    color:var(--lime);
+    font-size:20px;
+    letter-spacing:-.03em;
+  }
+
+  .calc-ifood-card small{
+    display:block;
+    margin-top:7px;
+    color:var(--muted-2);
+    font-size:9px;
+  }
+
+  /* =========================
+     AÇÕES
+  ========================= */
+
+  .calc-modal-actions{
+    position:sticky;
+    bottom:0;
+    z-index:10;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding-top:18px;
+    background:
+      linear-gradient(
+        to bottom,
+        transparent,
+        #0b0d0d 25%
+      );
+  }
+
+  /* =========================
+     TABLET
+  ========================= */
+
+  @media(max-width:1000px){
+
+    .calc-products{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .calc-hero-grid{
+      grid-template-columns:1fr;
+    }
+
+    .calc-hour-card{
+      max-width:320px;
+    }
+
+    .calc-settings{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .calc-cost-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .calc-summary{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+
+  /* =========================
+     CELULAR
+  ========================= */
+
+  @media(max-width:700px){
+
+    .calc-page{
+      gap:16px;
+    }
+
+    .calc-toolbar{
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    .calc-search{
+      max-width:none;
+    }
+
+    .calc-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      width:100%;
+    }
+
+    .calc-actions select,
+    .calc-actions .primary{
+      width:100%;
+      min-width:0;
+    }
+
+    .calc-hero{
+      padding:20px;
+      border-radius:19px;
+    }
+
+    .calc-hero h2{
+      font-size:25px;
+    }
+
+    .calc-hero p{
+      font-size:12px;
+    }
+
+    .calc-settings{
+      grid-template-columns:1fr;
+      gap:8px;
+    }
+
+    .calc-hour-card{
+      max-width:none;
+    }
+
+    .calc-products{
+      grid-template-columns:1fr;
+    }
+
+    .calc-product-image{
+      height:210px;
+    }
+
+    .calc-modal{
+      width:calc(100vw - 14px);
+      max-height:calc(100vh - 14px);
+      padding:16px;
+      border-radius:18px;
+    }
+
+    .calc-modal-head{
+      margin-bottom:15px;
+    }
+
+    .calc-modal-head h2{
+      font-size:21px;
+    }
+
+    .calc-step{
+      padding:14px;
+      border-radius:15px;
+    }
+
+    .calc-step-title{
+      align-items:flex-start;
+    }
+
+    .calc-step-title h3{
+      font-size:14px;
+    }
+
+    .calc-product-head{
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+
+    .calc-photo{
+      height:230px;
+    }
+
+    .calc-ingredient{
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .calc-ingredient .field:first-child{
+      grid-column:1/-1;
+    }
+
+    .calc-ingredient .icon-button{
+      min-height:42px;
+    }
+
+    .calc-cost-grid,
+    .calc-price-grid,
+    .calc-ifood,
+    .calc-summary{
+      grid-template-columns:1fr;
+    }
+
+    .calc-price-card strong{
+      font-size:22px;
+    }
+
+    .calc-ifood-card>div{
+      align-items:flex-start;
+    }
+
+    .calc-modal-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+    }
+
+    .calc-modal-actions button{
+      width:100%;
+    }
+  }
+
+  /* =========================
+     CELULAR PEQUENO
+  ========================= */
+
+  @media(max-width:420px){
+
+    .calc-actions{
+      grid-template-columns:1fr;
+    }
+
+    .calc-product-image{
+      height:190px;
+    }
+
+    .calc-photo{
+      height:200px;
+    }
+
+    .calc-ingredient{
+      grid-template-columns:1fr;
+    }
+
+    .calc-ingredient .field:first-child{
+      grid-column:auto;
+    }
+
+    .calc-modal-actions{
+      grid-template-columns:1fr;
+    }
+  }
+`}</style>
 
     <div className="calc-page">
 
