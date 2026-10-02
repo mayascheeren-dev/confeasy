@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardList, Clock3, Edit3, ImagePlus, LogOut,
