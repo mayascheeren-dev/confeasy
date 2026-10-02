@@ -644,7 +644,7 @@ prepMinutes
     form.desired_margin,
     hourlyRate,
     ingredientsCatalog,
-    additionalCosts
+    additionalCosts,
     ifoodRate
   ]);
 
