@@ -3380,9 +3380,13 @@ function Pantry({session,notify}){
 
 function Marketing({profile,setPage}){
 
-  const [activeTab,setActiveTab]=useState('assistant');
-  const [message,setMessage]=useState('');
-  const [messages,setMessages]=useState([
+  const [savingCreation,setSavingCreation]=useState(false);
+const [saveMessage,setSaveMessage]=useState('');
+const artRef=useRef(null);
+
+const [creations,setCreations]=useState([]);
+
+const [products,setProducts]=useState([]);
     {
       role:'ai',
       text:`Olá, ${profile?.full_name?.split(' ')[0]||'confeiteira'}! Sou a assistente da sua confeitaria. Posso ajudar você com receitas, marketing, promoções, clientes e muito mais.`
@@ -3422,6 +3426,50 @@ function Marketing({profile,setPage}){
     }
 
     loadProducts();
+  },[]);
+  useEffect(()=>{
+    async function loadCreations(){
+
+      const {data,error}=await supabase
+        .from('marketing_creations')
+        .select('*')
+        .order('created_at',{ascending:false});
+
+      if(error){
+        notify(error.message);
+        return;
+      }
+
+      const creationsWithUrls=await Promise.all(
+        (data||[]).map(async creation=>{
+
+          if(!creation.image_url){
+            return creation;
+          }
+
+          const {data:signedData,error:signedError}=await supabase
+            .storage
+            .from('marketing-creations')
+            .createSignedUrl(
+              creation.image_url,
+              3600
+            );
+
+          if(signedError){
+            return creation;
+          }
+
+          return {
+            ...creation,
+            signed_url:signedData?.signedUrl||''
+          };
+        })
+      );
+
+      setCreations(creationsWithUrls);
+    }
+
+    loadCreations();
   },[]);
   async function sendMessage(e){
   e?.preventDefault();
@@ -4372,54 +4420,73 @@ Não invente informações sobre o negócio que não foram fornecidas.`
 
           <div className="marketing-ai-gallery">
 
-            {[
-              ['Bolo de aniversário','Feed','Bolos especiais.'],
-              ['Brigadeiros gourmet','Story','Seu doce momento.'],
-              ['Promoção de fim de semana','Feed','Feito para celebrar.']
-            ].map((item,index)=>(
-              <article
-                className="marketing-ai-gallery-card"
-                key={index}
-              >
+            {creations.length===0 ? (
 
-                <div className={`marketing-ai-gallery-image gallery-${index+1}`}>
+  <div className="marketing-ai-empty">
+    <Image size={32}/>
+    <strong>Nenhuma criação salva ainda</strong>
+    <span>
+      Crie uma arte e salve para ela aparecer aqui.
+    </span>
+  </div>
 
-                  <span>
-                    {item[2]}
-                  </span>
+) : (
 
-                </div>
+  creations.map(creation=>(
 
-                <div className="marketing-ai-gallery-info">
+    <article
+      className="marketing-ai-gallery-card"
+      key={creation.id}
+    >
 
-                  <strong>
-                    {item[0]}
-                  </strong>
+      <div className="marketing-ai-gallery-image">
 
-                  <small>
-                    {item[1]} • criado recentemente
-                  </small>
+        {creation.signed_url ? (
+          <img
+            src={creation.signed_url}
+            alt={creation.product_name||'Criação'}
+          />
+        ) : (
+          <Image size={32}/>
+        )}
 
-                  <div>
+      </div>
 
-                    <button type="button">
-                      Abrir
-                    </button>
+      <div className="marketing-ai-gallery-info">
 
-                    <button type="button">
-                      Editar
-                    </button>
+        <strong>
+          {creation.product_name||'Minha criação'}
+        </strong>
 
-                    <button type="button">
-                      …
-                    </button>
+        <small>
+          {creation.format} • {creation.style}
+        </small>
 
-                  </div>
+        <div>
 
-                </div>
+          <button
+            type="button"
+            onClick={()=>{
+              if(creation.signed_url){
+                window.open(
+                  creation.signed_url,
+                  '_blank'
+                );
+              }
+            }}
+          >
+            Abrir
+          </button>
 
-              </article>
-            ))}
+        </div>
+
+      </div>
+
+    </article>
+
+  ))
+
+)}
 
           </div>
 
