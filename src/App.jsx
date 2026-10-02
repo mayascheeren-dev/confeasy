@@ -247,7 +247,7 @@ function ExpiredScreen({profile,onLogout}){
 function AppShell({session,profile,setProfile,page,setPage,onLogout,notify,toast}){
   const items=[
     ['dashboard','Visão geral',CakeSlice],
-    ['receitas','Calculadora',Fatia de bolo],
+    ['receitas','Calculadora',CakeSlice],
     ['orders','Pedidos',ClipboardList],
     ['finance','Finanças',CircleDollarSign],
     ['pantry','Despensa',Package],
