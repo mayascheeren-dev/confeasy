@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import {
   ArrowRight, Bell, CakeSlice, CheckCircle2, ChevronRight,
