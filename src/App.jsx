@@ -3394,27 +3394,100 @@ function Marketing({profile,setPage}){
     'Bolos feitos para momentos especiais'
   );
 
-  function sendMessage(e){
-    e?.preventDefault();
+  async function sendMessage(e){
+  e?.preventDefault();
 
-    const text=message.trim();
+  const text=message.trim();
 
-    if(!text)return;
+  if(!text)return;
+
+  const userMessage={
+    role:'user',
+    text
+  };
+
+  setMessages(prev=>[
+    ...prev,
+    userMessage
+  ]);
+
+  setMessage('');
+
+  try{
+
+    const conversation=[
+      {
+        role:'system',
+        content:`Você é a Assistente Confeasy, uma parceira especializada em confeitaria e pequenos negócios.
+
+Ajude a confeiteira com:
+- receitas e produção;
+- precificação;
+- marketing;
+- Instagram;
+- promoções;
+- atendimento a clientes;
+- ideias de conteúdo;
+- organização do negócio.
+
+Seja prática, clara e amigável.
+Considere estas informações da confeitaria quando forem relevantes:
+
+Nome da confeiteira: ${profile?.full_name||'não informado'}
+Nome do negócio: ${profile?.business_name||'Minha Confeitaria'}
+Cidade: ${profile?.city||'não informada'}
+Instagram: ${profile?.instagram||'não informado'}
+
+Não invente informações sobre o negócio que não foram fornecidas.`
+      },
+      ...messages.map(item=>({
+        role:item.role==='ai'?'assistant':'user',
+        content:item.text
+      })),
+      {
+        role:'user',
+        content:text
+      }
+    ];
+
+    const response=await fetch('/api/ai-chat',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        messages:conversation
+      })
+    });
+
+    const data=await response.json();
+
+    if(!response.ok){
+      throw new Error(
+        data?.error||'Não foi possível conectar com a IA.'
+      );
+    }
 
     setMessages(prev=>[
       ...prev,
       {
-        role:'user',
-        text
-      },
-      {
         role:'ai',
-        text:'Perfeito! Vou considerar isso na criação. Em breve esta conversa estará conectada à IA do Confeasy para gerar respostas, campanhas, receitas e conteúdos personalizados.'
+        text:data.message||'Não consegui gerar uma resposta agora.'
       }
     ]);
 
-    setMessage('');
+  }catch(error){
+
+    setMessages(prev=>[
+      ...prev,
+      {
+        role:'ai',
+        text:'Não consegui conectar com a IA neste momento. Tente novamente em alguns instantes.'
+      }
+    ]);
+
   }
+}
 
   function quickMessage(text){
     setMessages(prev=>[
