@@ -1792,6 +1792,13 @@ tbody tr:hover td {
   gap:7px;
   margin-top:10px;
 }
+.marketing-ai-save-message{
+  margin-top:12px;
+  text-align:center;
+  color:#d7ff11;
+  font-size:13px;
+  font-weight:600;
+}
 
 .marketing-ai-preview-actions button{
   flex:1;
