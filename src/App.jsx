@@ -1707,7 +1707,7 @@ prepMinutes
     white-space:nowrap;
   }
 
-  .calc-price-card.main{
+  .calc-price-card.featured{
     position:relative;
     overflow:hidden;
     border-color:rgba(215,255,17,.30);
@@ -1738,7 +1738,7 @@ prepMinutes
     letter-spacing:.08em;
   }
 
-  .calc-price-card.main strong{
+  .calc-price-card.featured strong{
     color:var(--lime);
   }
 
