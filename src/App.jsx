@@ -2803,7 +2803,7 @@ prepMinutes
 
               <div className="calc-price-grid">
 
-                <div className="calc-price-card main">
+              <div className="calc-price-card featured">
                   <span>
                     Preço sugerido
                   </span>
