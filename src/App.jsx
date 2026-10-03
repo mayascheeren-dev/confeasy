@@ -647,11 +647,6 @@ function Dashboard({profile,setPage}){
       />
 
       <Stat
-        label="Pedidos"
-        value={orders.length}
-      />
-
-      <Stat
         label="Despesas"
         value={money(exp)}
       />
