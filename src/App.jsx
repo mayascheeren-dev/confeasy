@@ -346,10 +346,24 @@ function Dashboard({profile,setPage}){
 
   useEffect(()=>{
     Promise.all([
-      supabase.from('orders').select('*').order('delivery_date',{ascending:true}).limit(8),
-      supabase.from('expenses').select('value'),
-      supabase.from('recipes').select('id'),
-      supabase.from('ingredients').select('id,quantity,min_quantity')
+      supabase
+        .from('orders')
+        .select('*')
+        .order('delivery_date',{ascending:true})
+        .limit(8),
+
+      supabase
+        .from('expenses')
+        .select('value'),
+
+      supabase
+        .from('recipes')
+        .select('id'),
+
+      supabase
+        .from('ingredients')
+        .select('id,quantity,min_quantity')
+
     ]).then(([o,e,r,i])=>{
       setOrders(o.data||[]);
       setExpenses(e.data||[]);
@@ -358,74 +372,335 @@ function Dashboard({profile,setPage}){
     });
   },[]);
 
-  const sales=orders.reduce((s,x)=>s+Number(x.value||0),0);
-  const exp=expenses.reduce((s,x)=>s+Number(x.value||0),0);
-  const low=ingredients.filter(x=>Number(x.quantity||0)<=Number(x.min_quantity||0)).length;
+  const sales=
+    orders.reduce(
+      (s,x)=>s+Number(x.value||0),
+      0
+    );
+
+  const exp=
+    expenses.reduce(
+      (s,x)=>s+Number(x.value||0),
+      0
+    );
+
+  const low=
+    ingredients.filter(
+      x=>
+        Number(x.quantity||0)
+        <=
+        Number(x.min_quantity||0)
+    ).length;
 
   return <>
+
+    {/* =========================
+        BOAS-VINDAS
+    ========================= */}
+
     <section className="hero">
+
       <div>
-        <div className="eyebrow">Bom dia, confeiteira! ✨</div>
-        <h2>Sua confeitaria, organizada.</h2>
-        <p>Pedidos, receitas, estoque e dinheiro conectados em um só lugar.</p>
-        <div className="quick">
-          <button className="primary" onClick={()=>setPage('orders')}><Plus size={17}/> Novo pedido</button>
-          <button className="secondary" onClick={()=>setPage('recipes')}><Plus size={17}/> Nova receita</button>
+
+        <div className="eyebrow">
+          Bom dia, confeiteira! ✨
         </div>
+
+        <h2>
+          Sua confeitaria, organizada.
+        </h2>
+
+        <p>
+          Pedidos, receitas, estoque e dinheiro
+          conectados em um só lugar.
+        </p>
+
+        <div className="quick">
+
+          <button
+            className="primary"
+            onClick={()=>setPage('orders')}
+          >
+            <Plus size={17}/>
+            Novo pedido
+          </button>
+
+          <button
+            className="secondary"
+            onClick={()=>setPage('recipes')}
+          >
+            <Plus size={17}/>
+            Nova receita
+          </button>
+
+        </div>
+
       </div>
-      <div className="hero-orb"><Sparkles size={46}/></div>
+
+      <div className="hero-orb">
+        <Sparkles size={46}/>
+      </div>
+
     </section>
+
+
+    {/* =========================
+        PRÓXIMOS PEDIDOS
+    ========================= */}
+
+    <section className="dashboard-orders panel">
+
+      <div className="section-head">
+
+        <div>
+          <h2>Próximos pedidos</h2>
+
+          <span>
+            Sua agenda de produção e entrega
+          </span>
+        </div>
+
+        <button
+          className="link"
+          onClick={()=>setPage('orders')}
+        >
+          Ver todos
+          <ChevronRight size={14}/>
+        </button>
+
+      </div>
+
+
+      {orders.length ? (
+
+        <div className="dashboard-orders-list">
+
+          {orders.slice(0,5).map(o=>(
+
+            <div
+              className="dashboard-order-card"
+              key={o.id}
+            >
+
+              <div className="dashboard-order-date">
+
+                <span>
+                  {dateBR(o.delivery_date)}
+                </span>
+
+                {o.delivery_time ? (
+
+                  <strong>
+                    <Clock3 size={17}/>
+                    {o.delivery_time}
+                  </strong>
+
+                ) : (
+
+                  <small>
+                    Horário não informado
+                  </small>
+
+                )}
+
+              </div>
+
+
+              <div className="dashboard-order-info">
+
+                <strong>
+                  {o.client_name}
+                </strong>
+
+                <span>
+                  {o.item_name}
+                </span>
+
+              </div>
+
+
+              <div className="dashboard-order-value">
+
+                <strong>
+                  {money(o.value)}
+                </strong>
+
+                <span
+                  className={`pill ${
+                    o.status==='Pago' ||
+                    o.status==='Entregue'
+                      ? 'ok'
+                      : ''
+                  }`}
+                >
+                  {o.status}
+                </span>
+
+              </div>
+
+
+              <button
+                className="dashboard-order-arrow"
+                onClick={()=>setPage('orders')}
+              >
+                <ChevronRight size={17}/>
+              </button>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      ) : (
+
+        <Empty
+          text="Você ainda não tem pedidos cadastrados."
+          action="Novo pedido"
+          onClick={()=>setPage('orders')}
+        />
+
+      )}
+
+    </section>
+
+
+    {/* =========================
+        RESUMO DA OPERAÇÃO
+    ========================= */}
+
+    <section className="section dashboard-summary">
+
+      <div className="section-head">
+
+        <div>
+          <h2>Resumo da operação</h2>
+
+          <span>
+            Uma visão rápida dos principais números.
+          </span>
+        </div>
+
+      </div>
+
+
+      <div className="dashboard-grid">
+
+        <MiniCard
+          icon={CakeSlice}
+          title="Receitas"
+          value={recipes.length}
+          text="receitas cadastradas"
+          onClick={()=>setPage('recipes')}
+        />
+
+        <MiniCard
+          icon={ShoppingCart}
+          title="Pedidos"
+          value={
+            orders.filter(
+              o=>
+                o.status!=='Entregue' &&
+                o.status!=='Cancelado'
+            ).length
+          }
+          text="em andamento"
+          onClick={()=>setPage('orders')}
+        />
+
+        <MiniCard
+          icon={Package}
+          title="Despensa"
+          value={low}
+          text={
+            low
+              ? 'itens em estoque mínimo'
+              : 'estoque controlado'
+          }
+          alert={low>0}
+          onClick={()=>setPage('pantry')}
+        />
+
+        <MiniCard
+          icon={WalletCards}
+          title="Saldo"
+          value={money(sales-exp)}
+          text="resultado registrado"
+          onClick={()=>setPage('finance')}
+        />
+
+      </div>
+
+    </section>
+
+
+    {/* =========================
+        INDICADORES FINANCEIROS
+    ========================= */}
 
     <div className="stats">
-      <Stat label="Vendas registradas" value={money(sales)} green/>
-      <Stat label="Pedidos" value={orders.length}/>
-      <Stat label="Despesas" value={money(exp)}/>
-      <Stat label="Resultado" value={money(sales-exp)} green/>
+
+      <Stat
+        label="Vendas registradas"
+        value={money(sales)}
+        green
+      />
+
+      <Stat
+        label="Pedidos"
+        value={orders.length}
+      />
+
+      <Stat
+        label="Despesas"
+        value={money(exp)}
+      />
+
+      <Stat
+        label="Resultado"
+        value={money(sales-exp)}
+        green
+      />
+
     </div>
 
-    <section className="section">
+
+    {/* =========================
+        PLANO
+    ========================= */}
+
+    <section className="dashboard-plan panel">
+
       <div className="section-head">
-        <div><h2>Resumo da operação</h2><span>Uma visão rápida dos principais números.</span></div>
-      </div>
-      <div className="dashboard-grid">
-        <MiniCard icon={CakeSlice} title="Receitas" value={recipes.length}
-          text="receitas cadastradas" onClick={()=>setPage('recipes')}/>
-        <MiniCard icon={ShoppingCart} title="Pedidos"
-          value={orders.filter(o=>o.status!=='Entregue'&&o.status!=='Cancelado').length}
-          text="em andamento" onClick={()=>setPage('orders')}/>
-        <MiniCard icon={Package} title="Despensa" value={low}
-          text={low?'itens em estoque mínimo':'estoque controlado'}
-          alert={low>0} onClick={()=>setPage('pantry')}/>
-        <MiniCard icon={WalletCards} title="Saldo" value={money(sales-exp)}
-          text="resultado registrado" onClick={()=>setPage('finance')}/>
-      </div>
-    </section>
 
-    <section className="lower">
-      <div className="panel">
-        <div className="section-head">
-          <div><h2>Próximos pedidos</h2><span>Agenda de produção e entrega</span></div>
-          <button className="link" onClick={()=>setPage('orders')}>Ver todos <ChevronRight size={14}/></button>
+        <div>
+          <h2>Seu plano</h2>
+          <span>Acesso ao Confeasy</span>
         </div>
-        {orders.length?
-          <table><thead><tr><th>Cliente</th><th>Pedido</th><th>Entrega</th><th>Valor</th><th>Status</th></tr></thead>
-            <tbody>{orders.map(o=>
-              <tr key={o.id}>
-                <td>{o.client_name}</td><td>{o.item_name}</td><td>{dateBR(o.delivery_date)}</td>
-                <td>{money(o.value)}</td>
-                <td><span className={`pill ${o.status==='Pago'||o.status==='Entregue'?'ok':''}`}>{o.status}</span></td>
-              </tr>
-            )}</tbody>
-          </table>
-          :<Empty text="Você ainda não tem pedidos cadastrados." action="Novo pedido" onClick={()=>setPage('orders')}/>}
+
       </div>
 
-      <div className="panel">
-        <div className="section-head"><div><h2>Seu plano</h2><span>Acesso ao Confeasy</span></div></div>
-        <div className="plan"><CheckCircle2 size={21}/><div><b>Acesso ativo</b><small>Válido até {dateBR(profile.expires_at)}</small></div></div>
-        <div className="mini-note">Seus dados ficam associados à sua conta e podem ser acessados em computador, tablet e celular.</div>
+      <div className="plan">
+
+        <CheckCircle2 size={21}/>
+
+        <div>
+          <b>Acesso ativo</b>
+
+          <small>
+            Válido até {dateBR(profile.expires_at)}
+          </small>
+        </div>
+
       </div>
+
+      <div className="mini-note">
+        Seus dados ficam associados à sua conta e podem
+        ser acessados em computador, tablet e celular.
+      </div>
+
     </section>
+
   </>;
 }
 
