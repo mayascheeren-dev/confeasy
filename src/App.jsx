@@ -3378,123 +3378,44 @@ function Pantry({session,notify}){
    MARKETING
 ========================================================= */
 
-function Marketing({profile,setPage}){
+function Marketing({profile}){
 
-  const [activeTab,setActiveTab]=useState('assistant');
   const [message,setMessage]=useState('');
+
   const [messages,setMessages]=useState([
     {
       role:'ai',
-      text:`Olá, ${profile?.full_name?.split(' ')[0]||'confeiteira'}! Sou a assistente da sua confeitaria. Posso ajudar você com receitas, marketing, promoções, clientes e muito mais.`
+      text:`Olá, ${profile?.full_name?.split(' ')[0]||'confeiteira'}! Eu sou a Ysa, sua assistente virtual. 💚
+
+Estou aqui para ajudar você com receitas, precificação, marketing, Instagram, promoções, clientes e organização da sua confeitaria.`
     }
   ]);
 
-  const [format,setFormat]=useState('Feed');
-  const [style,setStyle]=useState('Elegante');
-  const [artText,setArtText]=useState(
-    'Bolos feitos para momentos especiais'
-  );
-
-  const [savingCreation,setSavingCreation]=useState(false);
-  const [saveMessage,setSaveMessage]=useState('');
-  const artRef=useRef(null);
-
-  const [creations,setCreations]=useState([]);
-
-  const [products,setProducts]=useState([]);
-  const [selectedProductId,setSelectedProductId]=useState('');
-  const [artPhoto,setArtPhoto]=useState('');
-  const [photoMessage,setPhotoMessage]=useState('');
-    useEffect(()=>{
-    async function loadProducts(){
-      const {data,error}=await supabase
-        .from('recipes')
-        .select('id,name,photo_url,category')
-        .order('name');
-
-      if(error){
-        notify(error.message);
-        return;
-      }
-
-      setProducts(data||[]);
-
-      if(data?.length){
-        setSelectedProductId(String(data[0].id));
-      }
-    }
-
-    loadProducts();
-  },[]);
-  useEffect(()=>{
-    async function loadCreations(){
-
-      const {data,error}=await supabase
-        .from('marketing_creations')
-        .select('*')
-        .order('created_at',{ascending:false});
-
-      if(error){
-        notify(error.message);
-        return;
-      }
-
-      const creationsWithUrls=await Promise.all(
-        (data||[]).map(async creation=>{
-
-          if(!creation.image_url){
-            return creation;
-          }
-
-          const {data:signedData,error:signedError}=await supabase
-            .storage
-            .from('marketing-creations')
-            .createSignedUrl(
-              creation.image_url,
-              3600
-            );
-
-          if(signedError){
-            return creation;
-          }
-
-          return {
-            ...creation,
-            signed_url:signedData?.signedUrl||''
-          };
-        })
-      );
-
-      setCreations(creationsWithUrls);
-    }
-
-    loadCreations();
-  },[]);
   async function sendMessage(e){
-  e?.preventDefault();
+    e?.preventDefault();
 
-  const text=message.trim();
+    const text=message.trim();
 
-  if(!text)return;
+    if(!text)return;
 
-  const userMessage={
-    role:'user',
-    text
-  };
+    const userMessage={
+      role:'user',
+      text
+    };
 
-  setMessages(prev=>[
-    ...prev,
-    userMessage
-  ]);
+    setMessages(prev=>[
+      ...prev,
+      userMessage
+    ]);
 
-  setMessage('');
+    setMessage('');
 
-  try{
+    try{
 
-    const conversation=[
-      {
-        role:'system',
-        content:`Você é a Assistente Confeasy, uma parceira especializada em confeitaria e pequenos negócios.
+      const conversation=[
+        {
+          role:'system',
+          content:`Você é Ysa, a assistente virtual do Confeasy, especializada em confeitaria e pequenos negócios.
 
 Ajude a confeiteira com:
 - receitas e produção;
@@ -3506,7 +3427,8 @@ Ajude a confeiteira com:
 - ideias de conteúdo;
 - organização do negócio.
 
-Seja prática, clara e amigável.
+Seja prática, clara, amigável e objetiva.
+
 Considere estas informações da confeitaria quando forem relevantes:
 
 Nome da confeiteira: ${profile?.full_name||'não informado'}
@@ -3515,983 +3437,174 @@ Cidade: ${profile?.city||'não informada'}
 Instagram: ${profile?.instagram||'não informado'}
 
 Não invente informações sobre o negócio que não foram fornecidas.`
-      },
-      ...messages.map(item=>({
-        role:item.role==='ai'?'assistant':'user',
-        content:item.text
-      })),
-      {
-        role:'user',
-        content:text
-      }
-    ];
-
-    const response=await fetch('/api/ai-chat',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        messages:conversation
-      })
-    });
-
-    const data=await response.json();
-
-    if(!response.ok){
-      throw new Error(
-        data?.error||'Não foi possível conectar com a IA.'
-      );
-    }
-
-    setMessages(prev=>[
-      ...prev,
-      {
-        role:'ai',
-        text:data.message||'Não consegui gerar uma resposta agora.'
-      }
-    ]);
-
-  }catch(error){
-
-    setMessages(prev=>[
-      ...prev,
-      {
-        role:'ai',
-        text:'Não consegui conectar com a IA neste momento. Tente novamente em alguns instantes.'
-      }
-    ]);
-
-  }
-  }
-
-  async function saveCreation(){
-
-  if(!artRef.current){
-    setSaveMessage('Não foi possível preparar a criação.');
-    return;
-  }
-
-  setSavingCreation(true);
-  setSaveMessage('');
-
-  try{
-
-    const product=products.find(
-      item=>String(item.id)===String(selectedProductId)
-    );
-
-    if(!product){
-      throw new Error('Selecione um produto antes de salvar.');
-    }
-
-    const {
-      data:{user},
-      error:userError
-    }=await supabase.auth.getUser();
-
-    if(userError||!user){
-      throw new Error('Não foi possível identificar sua conta.');
-    }
-
-    const preview=artRef.current;
-
-    const dimensions=
-      format==='Feed'
-        ? {width:1080,height:1350}
-        : format==='Story'
-          ? {width:1080,height:1920}
-          : {width:1080,height:1080};
-
-    const previewWidth=preview.getBoundingClientRect().width;
-
-    const capture=await html2canvas(
-      preview,
-      {
-        backgroundColor:null,
-        useCORS:true,
-        scale:dimensions.width/previewWidth,
-        logging:false
-      }
-    );
-
-    const finalCanvas=document.createElement('canvas');
-
-    finalCanvas.width=dimensions.width;
-    finalCanvas.height=dimensions.height;
-
-    const context=finalCanvas.getContext('2d');
-
-    if(!context){
-      throw new Error('Não foi possível preparar a imagem.');
-    }
-
-    context.drawImage(
-      capture,
-      0,
-      0,
-      dimensions.width,
-      dimensions.height
-    );
-
-    const blob=await new Promise(resolve=>{
-      finalCanvas.toBlob(
-        resolve,
-        'image/png'
-      );
-    });
-
-    if(!blob){
-      throw new Error('Não foi possível gerar a imagem.');
-    }
-
-    const filePath=
-      `${user.id}/${crypto.randomUUID()}.png`;
-
-    const {error:uploadError}=await supabase
-      .storage
-      .from('marketing-creations')
-      .upload(
-        filePath,
-        blob,
+        },
+        ...messages.map(item=>({
+          role:item.role==='ai'?'assistant':'user',
+          content:item.text
+        })),
         {
-          contentType:'image/png',
-          upsert:false
+          role:'user',
+          content:text
         }
-      );
+      ];
 
-    if(uploadError){
-      throw uploadError;
-    }
-
-    const {error:insertError}=await supabase
-      .from('marketing_creations')
-      .insert({
-        user_id:user.id,
-        product_id:product.id,
-        product_name:product.name,
-        format,
-        style,
-        art_text:artText,
-        image_url:filePath
+      const response=await fetch('/api/ai-chat',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          messages:conversation
+        })
       });
 
-    if(insertError){
-      throw insertError;
-    }
+      const data=await response.json();
 
-    setSaveMessage('Criação salva com sucesso!');
-
-  }catch(error){
-
-    console.error(error);
-
-    setSaveMessage(
-      error?.message||
-      'Não foi possível salvar a criação.'
-    );
-
-  }finally{
-
-    setSavingCreation(false);
-
-  }
-}
-
-  function quickMessage(text){
-    setMessages(prev=>[
-      ...prev,
-      {
-        role:'user',
-        text
-      },
-      {
-        role:'ai',
-        text:'Ótimo! Posso transformar essa ideia em um conteúdo completo para sua confeitaria.'
+      if(!response.ok){
+        throw new Error(
+          data?.error||'Não foi possível conectar com a Ysa.'
+        );
       }
-    ]);
-  }
 
-  function openCreator(){
-    setActiveTab('create');
-  }
+      setMessages(prev=>[
+        ...prev,
+        {
+          role:'ai',
+          text:data.message||'Não consegui gerar uma resposta agora.'
+        }
+      ]);
 
-  const quickActions=[
-    {
-      title:'Criar publicação',
-      description:'Post pronto para Instagram',
-      icon:Smartphone,
-      action:openCreator
-    },
-    {
-      title:'Criar uma arte',
-      description:'Escolha produto, formato e estilo',
-      icon:Image,
-      action:openCreator
-    },
-    {
-      title:'Criar legenda',
-      description:'Texto com CTA para vender',
-      icon:FileText,
-      action:openCreator
-    },
-    {
-      title:'Criar Stories',
-      description:'Sequência de Stories para divulgar',
-      icon:MessageCircle,
-      action:openCreator
-    },
-    {
-      title:'Criar promoção',
-      description:'Oferta pensada para seu produto',
-      icon:Tag,
-      action:()=>quickMessage(
-        'Quero criar uma promoção para um dos meus produtos.'
-      )
-    },
-    {
-      title:'Ideias para hoje',
-      description:'Conteúdo rápido para publicar',
-      icon:Lightbulb,
-      action:()=>quickMessage(
-        'Me dê ideias de conteúdo para publicar hoje.'
-      )
+    }catch(error){
+
+      setMessages(prev=>[
+        ...prev,
+        {
+          role:'ai',
+          text:'Não consegui conectar com a Ysa neste momento. Tente novamente em alguns instantes.'
+        }
+      ]);
+
     }
-  ];
+  }
 
   return (
-    <section className="marketing-ai-page">
+    <section className="marketing-yssa">
 
-      <div className="marketing-ai-header">
+      <div className="marketing-yssa-header">
 
-        <div>
-          <div className="marketing-ai-kicker">
-            CONFEASY • INTELIGÊNCIA PARA SUA CONFEITARIA
+        <div className="marketing-yssa-identity">
+
+          <div className="marketing-yssa-avatar">
+            <Bot size={25}/>
           </div>
 
-          <h2>
-            Marketing <span>IA</span>
-          </h2>
+          <div>
+            <span className="eyebrow">
+              Sua assistente virtual
+            </span>
 
-          <p>
-            Crie conteúdo, tire dúvidas e transforme ideias em vendas.
-          </p>
+            <h2>
+              Ysa
+            </h2>
+
+            <p>
+              Uma parceira para sua confeitaria.
+            </p>
+          </div>
+
         </div>
 
-        <div className="marketing-ai-business">
+        <a
+          href="https://chatgpt.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="marketing-yssa-chatgpt"
+        >
+          <MessageCircle size={17}/>
+          Abrir ChatGPT
+          <ArrowRight size={15}/>
+        </a>
 
-          <div className="marketing-ai-business-avatar">
-            {(profile?.business_name||'M')[0].toUpperCase()}
+      </div>
+
+
+      <div className="marketing-yssa-chat panel">
+
+        <div className="marketing-yssa-chat-head">
+
+          <div className="marketing-yssa-small-avatar">
+            <Bot size={18}/>
           </div>
 
           <div>
             <strong>
-              {profile?.business_name||'Minha Confeitaria'}
+              Converse com a Ysa
             </strong>
 
-            <small>
-              Minha confeitaria
-            </small>
+            <span>
+              Tire dúvidas ou peça ajuda para sua confeitaria.
+            </span>
           </div>
 
-          <ChevronDown size={15}/>
-
-        </div>
-
-      </div>
-
-
-      <div className="marketing-ai-tabs">
-
-        <button
-          type="button"
-          className={activeTab==='assistant'?'active':''}
-          onClick={()=>setActiveTab('assistant')}
-        >
-          <MessageCircle size={17}/>
-          Assistente
-        </button>
-
-        <button
-          type="button"
-          className={activeTab==='create'?'active':''}
-          onClick={()=>setActiveTab('create')}
-        >
-          <Image size={17}/>
-          Criar conteúdo
-        </button>
-
-        <button
-          type="button"
-          className={activeTab==='library'?'active':''}
-          onClick={()=>setActiveTab('library')}
-        >
-          <ImagePlus size={17}/>
-          Minhas criações
-        </button>
-
-      </div>
-
-
-      {activeTab==='assistant'&&(
-
-        <>
-
-          <div className="marketing-ai-main-grid">
-
-            <div className="marketing-ai-chat panel">
-
-              <div className="marketing-ai-chat-head">
-
-                <div className="marketing-ai-bot">
-                  <Bot size={22}/>
-                </div>
-
-                <div>
-                  <strong>
-                    Assistente Confeasy
-                  </strong>
-
-                  <span>
-                    Sua parceira para cuidar do negócio
-                  </span>
-                </div>
-
-                <div className="marketing-ai-status">
-                  <span></span>
-                  pronta para ajudar
-                </div>
-
-              </div>
-
-
-              <div className="marketing-ai-messages">
-
-                {messages.map((item,index)=>(
-                  <div
-                    key={index}
-                    className={
-                      item.role==='user'
-                        ? 'marketing-ai-message user'
-                        : 'marketing-ai-message ai'
-                    }
-                  >
-
-                    {item.role==='ai'&&(
-                      <div className="marketing-ai-message-icon">
-                        <Bot size={15}/>
-                      </div>
-                    )}
-
-                    <div>
-                      {item.text}
-                    </div>
-
-                  </div>
-                ))}
-
-
-                {messages.length===1&&(
-
-                  <div className="marketing-ai-suggestions">
-
-                    <button
-                      type="button"
-                      onClick={()=>
-                        quickMessage(
-                          'Quero uma ideia de conteúdo.'
-                        )
-                      }
-                    >
-                      <Lightbulb size={14}/>
-                      Ideias de conteúdo
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={()=>
-                        quickMessage(
-                          'Preciso de uma receita.'
-                        )
-                      }
-                    >
-                      <FileText size={14}/>
-                      Preciso de uma receita
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={()=>
-                        quickMessage(
-                          'Quero responder uma cliente.'
-                        )
-                      }
-                    >
-                      <MessageCircle size={14}/>
-                      Responder uma cliente
-                    </button>
-
-                  </div>
-
-                )}
-
-              </div>
-
-
-              <div className="marketing-ai-chat-input">
-
-                <button
-                  type="button"
-                  className="marketing-ai-input-icon"
-                  title="Anexar"
-                >
-                  <ImagePlus size={18}/>
-                </button>
-
-                <form onSubmit={sendMessage}>
-                  <input
-                    value={message}
-                    onChange={e=>setMessage(e.target.value)}
-                    placeholder="Digite sua mensagem aqui..."
-                  />
-
-                  <button
-                    type="submit"
-                    className="marketing-ai-send"
-                    title="Enviar"
-                  >
-                    <Send size={18}/>
-                  </button>
-                </form>
-
-              </div>
-
-            </div>
-
-
-            <div className="marketing-ai-side">
-
-              <div className="marketing-ai-create-banner">
-
-                <div className="marketing-ai-banner-content">
-
-                  <span>
-                    TRANSFORME<br/>
-                    SUAS IDEIAS EM
-                  </span>
-
-                  <h3>
-                    Conteúdo<br/>
-                    <b>que vende</b>
-                  </h3>
-
-                  <p>
-                    Crie imagens, legendas, Stories e campanhas
-                    completas para sua confeitaria em segundos.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={openCreator}
-                  >
-                    Começar a criar
-                    <ArrowRight size={16}/>
-                  </button>
-
-                </div>
-
-                <div className="marketing-ai-banner-decoration">
-                  <CakeSlice size={150}/>
-                </div>
-
-              </div>
-
-
-              <div className="marketing-ai-today panel">
-
-                <div className="marketing-ai-section-title">
-
-                  <div>
-                    <h3>
-                      <Lightbulb size={19}/>
-                      O que postar hoje?
-                    </h3>
-
-                    <p>
-                      Sugestões personalizadas para sua confeitaria.
-                    </p>
-                  </div>
-
-                  <button type="button">
-                    <CalendarDays size={14}/>
-                    Ver mais sugestões
-                  </button>
-
-                </div>
-
-
-                <div className="marketing-ai-mini-grid">
-
-                  <button type="button">
-                    <CakeSlice size={23}/>
-                    <strong>Produto em destaque</strong>
-                    <span>
-                      Mostre seu bolo mais vendido do momento.
-                    </span>
-                    <ChevronRight size={15}/>
-                  </button>
-
-                  <button type="button">
-                    <Image size={23}/>
-                    <strong>Bastidores</strong>
-                    <span>
-                      Mostre um pouco do seu dia na confeitaria.
-                    </span>
-                    <ChevronRight size={15}/>
-                  </button>
-
-                  <button type="button">
-                    <Gift size={23}/>
-                    <strong>Oferta especial</strong>
-                    <span>
-                      Crie uma promoção para o fim de semana.
-                    </span>
-                    <ChevronRight size={15}/>
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div className="marketing-ai-quick">
-
-            <div className="marketing-ai-quick-head">
-
-              <div>
-                <h3>
-                  <WandSparkles size={21}/>
-                  Ações rápidas
-                </h3>
-
-                <p>
-                  Escolha o que você quer criar agora.
-                </p>
-              </div>
-
-              <span>
-                Tudo que você precisa para divulgar sua
-                confeitaria em um só lugar.
-              </span>
-
-            </div>
-
-
-            <div className="marketing-ai-quick-grid">
-
-              {quickActions.map((item,index)=>{
-
-                const Icon=item.icon;
-
-                return (
-                  <button
-                    type="button"
-                    key={index}
-                    className="marketing-ai-quick-card"
-                    onClick={item.action}
-                  >
-
-                    <div className="marketing-ai-quick-icon">
-                      <Icon size={28}/>
-                    </div>
-
-                    <ChevronRight
-                      className="marketing-ai-quick-arrow"
-                      size={17}
-                    />
-
-                    <strong>
-                      {item.title}
-                    </strong>
-
-                    <span>
-                      {item.description}
-                    </span>
-
-                  </button>
-                );
-
-              })}
-
-            </div>
-
-          </div>
-
-        </>
-
-      )}
-
-
-      {activeTab==='create'&&(
-
-        <div className="marketing-ai-create-page">
-
-          <div className="marketing-ai-create-config panel">
-
-            <div className="marketing-ai-create-heading">
-              <div className="marketing-ai-icon-title">
-                <WandSparkles size={20}/>
-              </div>
-
-              <div>
-                <h3>
-                  Criar conteúdo
-                </h3>
-
-                <p>
-                  Você escolhe o objetivo. A IA cuida da criação.
-                </p>
-              </div>
-            </div>
-
-
-            <Field label="O que você quer divulgar?">
-  <select
-    value={selectedProductId}
-    onChange={e=>{
-      setSelectedProductId(e.target.value);
-      setArtPhoto('');
-      setPhotoMessage('');
-    }}
-  >
-    {products.length ? (
-      products.map(product=>(
-        <option
-          key={product.id}
-          value={String(product.id)}
-        >
-          {product.name}
-        </option>
-      ))
-    ) : (
-      <option value="">
-        Nenhum produto cadastrado
-      </option>
-    )}
-  </select>
-</Field>
-
-
-            <div className="marketing-ai-field">
-
-              <label>
-                FORMATO
-              </label>
-
-              <div className="marketing-ai-format-grid">
-
-                {[
-                  ['Feed','1080 × 1350'],
-                  ['Story','1080 × 1920'],
-                  ['Quadrado','1080 × 1080']
-                ].map(([name,size])=>(
-                  <button
-                    type="button"
-                    key={name}
-                    className={format===name?'active':''}
-                    onClick={()=>setFormat(name)}
-                  >
-                    <strong>
-                      {name}
-                    </strong>
-
-                    <span>
-                      {size}
-                    </span>
-                  </button>
-                ))}
-
-              </div>
-
-            </div>
-
-
-            <div className="marketing-ai-field">
-
-              <label>
-                ESTILO DA ARTE
-              </label>
-
-              <div className="marketing-ai-style-list">
-
-                {[
-                  'Elegante',
-                  'Delicado',
-                  'Luxuoso',
-                  'Artesanal',
-                  'Minimalista',
-                  'Colorido'
-                ].map(item=>(
-                  <button
-                    type="button"
-                    key={item}
-                    className={style===item?'active':''}
-                    onClick={()=>setStyle(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-
-              </div>
-
-            </div>
-
-
-            <div className="marketing-ai-field">
-
-              <label>
-                TEXTO NA ARTE
-              </label>
-
-              <input
-                value={artText}
-                onChange={e=>setArtText(e.target.value)}
-                placeholder="Ex.: Feito para momentos especiais"
-              />
-
-            </div>
-
-
-            <button
-  type="button"
-  className="marketing-ai-photo-button"
-  onClick={()=>{
-    const product=products.find(
-      item=>String(item.id)===String(selectedProductId)
-    );
-
-    if(!product){
-      setPhotoMessage('Selecione um produto.');
-      return;
-    }
-
-    if(!product.photo_url){
-      setArtPhoto('');
-      setPhotoMessage('Este produto ainda não possui uma foto cadastrada.');
-      return;
-    }
-
-    setArtPhoto(product.photo_url);
-    setPhotoMessage('Foto do produto adicionada à criação.');
-  }}
->
-  <ImagePlus size={17}/>
-  Usar foto cadastrada no produto
-</button>
-
-
-      <button
-  type="button"
-  className="marketing-ai-generate"
->
-  <WandSparkles size={17}/>
-  Gerar minha arte
-</button>
-
-          </div>
-
-
-          <div className="marketing-ai-preview panel">
-
-            <div className="marketing-ai-preview-head">
-
-              <div>
-                <strong>
-                  Prévia da criação
-                </strong>
-
-                <span>
-                  {format} • {
-                    format==='Feed'
-                      ? '1080 × 1350'
-                      : format==='Story'
-                        ? '1080 × 1920'
-                        : '1080 × 1080'
-                  }
-                </span>
-              </div>
-
-            </div>
-
-
-           <div
-  className="marketing-ai-art"
-  ref={artRef}
->
-
-  <div className="marketing-ai-art-product">
- {artPhoto ? (
-  <img
-    src={artPhoto}
-    alt="Foto do produto"
-    className="marketing-ai-product-photo"
-  />
-) : (
-  <CakeSlice size={105}/>
-)}
-</div>
-
-<div className="marketing-ai-art-copy">
-
-  <small>
-    {profile?.business_name||'MINHA CONFEITARIA'}
-  </small>
-
-  <h3>
-    {artText||'Momentos especiais.'}
-  </h3>
-
-  <p>
-    Bolos feitos com carinho para celebrar.
-  </p>
-
-</div>
-
-</div>
-
-            <div className="marketing-ai-preview-actions">
-
-  <button
-  type="button"
-  className="primary"
-  onClick={saveCreation}
-  disabled={savingCreation}
->
-  <Check size={15}/>
-  {savingCreation ? 'Salvando...' : 'Salvar criação'}
-</button>
-
-</div>
-            {saveMessage&&(
-  <div className="marketing-ai-save-message">
-    {saveMessage}
-  </div>
-)}
-
+          <div className="marketing-ai-status">
+            <span></span>
+            online
           </div>
 
         </div>
 
-      )}
 
+        <div className="marketing-yssa-messages">
 
-      {activeTab==='library'&&(
-
-        <div className="marketing-ai-library">
-
-          <div className="marketing-ai-library-head">
-
-            <div>
-              <h3>
-                Minhas criações
-              </h3>
-
-              <p>
-                Tudo que você criou com a IA em um só lugar.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="primary"
-              onClick={openCreator}
+          {messages.map((item,index)=>(
+            <div
+              key={index}
+              className={
+                item.role==='user'
+                  ? 'marketing-ai-message user'
+                  : 'marketing-ai-message ai'
+              }
             >
-              <Plus size={16}/>
-              Nova criação
+
+              {item.role==='ai'&&(
+                <div className="marketing-ai-message-icon">
+                  <Bot size={15}/>
+                </div>
+              )}
+
+              <div>
+                {item.text}
+              </div>
+
+            </div>
+          ))}
+
+        </div>
+
+
+        <div className="marketing-yssa-input">
+
+          <form onSubmit={sendMessage}>
+
+            <input
+              value={message}
+              onChange={e=>setMessage(e.target.value)}
+              placeholder="Converse com a Ysa..."
+            />
+
+            <button
+              type="submit"
+              className="marketing-ai-send"
+              title="Enviar"
+            >
+              <Send size={18}/>
             </button>
 
-          </div>
-
-
-          <div className="marketing-ai-gallery">
-
-            {creations.length===0 ? (
-
-  <div className="marketing-ai-empty">
-    <Image size={32}/>
-    <strong>Nenhuma criação salva ainda</strong>
-    <span>
-      Crie uma arte e salve para ela aparecer aqui.
-    </span>
-  </div>
-
-) : (
-
-  creations.map(creation=>(
-
-    <article
-      className="marketing-ai-gallery-card"
-      key={creation.id}
-    >
-
-      <div className="marketing-ai-gallery-image">
-
-        {creation.signed_url ? (
-          <img
-            src={creation.signed_url}
-            alt={creation.product_name||'Criação'}
-          />
-        ) : (
-          <Image size={32}/>
-        )}
-
-      </div>
-
-      <div className="marketing-ai-gallery-info">
-
-        <strong>
-          {creation.product_name||'Minha criação'}
-        </strong>
-
-        <small>
-          {creation.format} • {creation.style}
-        </small>
-
-        <div>
-
-          <button
-            type="button"
-            onClick={()=>{
-              if(creation.signed_url){
-                window.open(
-                  creation.signed_url,
-                  '_blank'
-                );
-              }
-            }}
-          >
-            Abrir
-          </button>
+          </form>
 
         </div>
 
       </div>
-
-    </article>
-
-  ))
-
-)}
-
-          </div>
-
-        </div>
-
-      )}
 
     </section>
   );
