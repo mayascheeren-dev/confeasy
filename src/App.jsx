@@ -3195,7 +3195,11 @@ function Pantry({session,notify}){
   const [query,setQuery]=useState('');
 
   async function load(){
-    const {data,error}=await supabase.from('ingredients').select('*').order('name');
+    const {data,error}=await supabase
+      .from('ingredients')
+      .select('*')
+      .order('name');
+
     if(error)notify(error.message);
     else setRows(data||[]);
   }
@@ -3224,156 +3228,421 @@ function Pantry({session,notify}){
 
     const packageQuantity=Number(form.package_quantity)||0;
     const packageCost=Number(form.package_cost)||0;
+
     const selected=UNIT_INFO[form.package_unit]||{
-      family:'other',base:form.package_unit||'un',factor:1
+      family:'other',
+      base:form.package_unit||'un',
+      factor:1
     };
 
-    const totalBaseQuantity=packageQuantity*selected.factor;
-    const baseUnitCost=totalBaseQuantity>0
-      ? packageCost/totalBaseQuantity
-      : 0;
+    const totalBaseQuantity=
+      packageQuantity*selected.factor;
+
+    const baseUnitCost=
+      totalBaseQuantity>0
+        ? packageCost/totalBaseQuantity
+        : 0;
 
     const payload={
       user_id:session.user.id,
       name:form.name.trim(),
+
       package_quantity:packageQuantity,
       package_unit:form.package_unit,
       package_cost:packageCost,
+
       unit_family:selected.family,
       base_unit:selected.base,
       base_unit_cost:baseUnitCost,
+
       quantity:Number(form.quantity)||0,
       min_quantity:Number(form.min_quantity)||0
     };
 
     const res=editing
-      ? await supabase.from('ingredients').update(payload).eq('id',editing.id)
-      : await supabase.from('ingredients').insert(payload);
+      ? await supabase
+          .from('ingredients')
+          .update(payload)
+          .eq('id',editing.id)
+      : await supabase
+          .from('ingredients')
+          .insert(payload);
 
-    if(res.error) notify(res.error.message);
-    else{
+    if(res.error){
+      notify(res.error.message);
+    }else{
       setOpen(false);
-      notify(editing?'Ingrediente atualizado.':'Ingrediente adicionado.');
+      notify(
+        editing
+          ? 'Ingrediente atualizado.'
+          : 'Ingrediente adicionado.'
+      );
       load();
     }
   }
 
   async function remove(id){
     if(!confirm('Excluir este ingrediente?'))return;
-    const {error}=await supabase.from('ingredients').delete().eq('id',id);
+
+    const {error}=await supabase
+      .from('ingredients')
+      .delete()
+      .eq('id',id);
+
     if(error)notify(error.message);
     else load();
   }
 
   const filtered=rows.filter(r=>
-    !query||r.name.toLowerCase().includes(query.toLowerCase())
+    !query ||
+    r.name.toLowerCase().includes(query.toLowerCase())
   );
 
   return <>
     <div className="page-tools standard-page-tools">
+
       <div className="standard-search-wrap">
-        <div className="search-box"><Search size={17}/>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar ingrediente..."/>
+        <div className="search-box">
+          <Search size={17}/>
+          <input
+            value={query}
+            onChange={e=>setQuery(e.target.value)}
+            placeholder="Buscar ingrediente..."
+          />
         </div>
       </div>
+
       <div className="standard-actions">
-        <button className="primary" onClick={openNew}><Plus size={17}/> Novo ingrediente</button>
+        <button
+          className="primary"
+          onClick={openNew}
+        >
+          <Plus size={17}/>
+          Novo ingrediente
+        </button>
       </div>
+
     </div>
 
+
     <section className="panel pantry-page-panel">
+
       <div className="section-head">
-        <div><h2>Minha despensa</h2><span>{rows.length} ingredientes cadastrados</span></div>
+        <div>
+          <h2>Minha despensa</h2>
+          <span>
+            {rows.length} ingredientes cadastrados
+          </span>
+        </div>
       </div>
 
-      {filtered.length?<div className="table-wrap">
-        <table><thead><tr>
-          <th>Ingrediente</th><th>Embalagem</th><th>Custo base</th>
-          <th>Estoque</th><th>Mínimo</th><th>Status</th><th/>
-        </tr></thead>
-        <tbody>{filtered.map(r=>{
-          const low=Number(r.quantity||0)<=Number(r.min_quantity||0);
-          return <tr key={r.id}>
-            <td><b>{r.name}</b></td>
-            <td>{r.package_quantity} {r.package_unit}</td>
-            <td>{money(r.base_unit_cost)} / {r.base_unit||r.package_unit}</td>
-            <td>{r.quantity} {r.base_unit||r.package_unit}</td>
-            <td>{r.min_quantity} {r.base_unit||r.package_unit}</td>
-            <td><span className={`pill ${low?'warning':'ok'}`}>{low?'Repor':'OK'}</span></td>
-            <td><div className="row-actions">
-              <button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button>
-              <button className="icon-button danger" onClick={()=>remove(r.id)}><Trash2 size={15}/></button>
-            </div></td>
-          </tr>;
-        })}</tbody></table>
-      </div>:<Empty text="Sua despensa está vazia." action="Novo ingrediente" onClick={openNew}/>}
+
+      {filtered.length ? (
+
+        <div className="table-wrap">
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>Ingrediente</th>
+                <th>Embalagem</th>
+                <th>Custo base</th>
+                <th>Estoque</th>
+                <th>Mínimo</th>
+                <th>Status</th>
+                <th/>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {filtered.map(r=>{
+
+                const low=
+                  Number(r.quantity||0)
+                  <=
+                  Number(r.min_quantity||0);
+
+                return (
+                  <tr key={r.id}>
+
+                    <td>
+                      <b>{r.name}</b>
+                    </td>
+
+                    <td>
+                      {r.package_quantity} {r.package_unit}
+                    </td>
+
+                    <td>
+                      {money(r.base_unit_cost)}
+                      {' / '}
+                      {r.base_unit||r.package_unit}
+                    </td>
+
+                    <td>
+                      {r.quantity} embalagens
+                    </td>
+
+                    <td>
+                      {r.min_quantity} embalagens
+                    </td>
+
+                    <td>
+                      <span
+                        className={`pill ${
+                          low ? 'warning' : 'ok'
+                        }`}
+                      >
+                        {low ? 'Repor' : 'OK'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="row-actions">
+
+                        <button
+                          className="icon-button"
+                          onClick={()=>edit(r)}
+                        >
+                          <Edit3 size={15}/>
+                        </button>
+
+                        <button
+                          className="icon-button danger"
+                          onClick={()=>remove(r.id)}
+                        >
+                          <Trash2 size={15}/>
+                        </button>
+
+                      </div>
+                    </td>
+
+                  </tr>
+                );
+
+              })}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      ) : (
+
+        <Empty
+          text="Sua despensa está vazia."
+          action="Novo ingrediente"
+          onClick={openNew}
+        />
+
+      )}
+
     </section>
 
-    {open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar ingrediente':'Novo ingrediente'}>
-      <form className="form" onSubmit={save}>
-        <Field label="Ingrediente">
-          <input required value={form.name}
-            onChange={e=>setForm({...form,name:e.target.value})}
-            placeholder="Ex.: Chocolate"/>
-        </Field>
 
-        <div className="form-grid two">
-          <Field label="Quantidade da embalagem">
-            <input type="number" min="0" step="0.001"
-              value={form.package_quantity}
-              onChange={e=>setForm({...form,package_quantity:e.target.value})}
-              placeholder="Ex.: 1000"/>
+    {open && (
+
+      <Modal
+        open={open}
+        close={()=>setOpen(false)}
+        title={
+          editing
+            ? 'Editar ingrediente'
+            : 'Novo ingrediente'
+        }
+      >
+
+        <form
+          className="form"
+          onSubmit={save}
+        >
+
+          <Field label="Ingrediente">
+
+            <input
+              required
+              value={form.name}
+              onChange={e=>
+                setForm({
+                  ...form,
+                  name:e.target.value
+                })
+              }
+              placeholder="Ex.: Chocolate"
+            />
+
           </Field>
 
-          <Field label="Unidade da embalagem">
-            <select value={form.package_unit}
-              onChange={e=>setForm({...form,package_unit:e.target.value})}>
-              <option value="g">g — gramas</option>
-              <option value="kg">kg — quilos</option>
-              <option value="ml">ml — mililitros</option>
-              <option value="l">L — litros</option>
-              <option value="un">un — unidade</option>
-              <option value="pacote">pacote</option>
-              <option value="caixa">caixa</option>
-            </select>
-          </Field>
 
-          <Field label="Preço da embalagem">
-            <input type="number" min="0" step="0.01"
-              value={form.package_cost}
-              onChange={e=>setForm({...form,package_cost:e.target.value})}
-              placeholder="R$ 0,00"/>
-          </Field>
+          <div className="form-grid two">
 
-          <Field label="Estoque disponível">
-            <input type="number" min="0" step="0.001"
-              value={form.quantity}
-              onChange={e=>setForm({...form,quantity:e.target.value})}
-              placeholder="Ex.: 2000"/>
-          </Field>
+            <Field label="Quantidade da embalagem">
 
-          <Field label="Estoque mínimo">
-            <input type="number" min="0" step="0.001"
-              value={form.min_quantity}
-              onChange={e=>setForm({...form,min_quantity:e.target.value})}
-              placeholder="Ex.: 500"/>
-          </Field>
-        </div>
+              <input
+                type="number"
+                min="0"
+                step="0.001"
+                value={form.package_quantity}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    package_quantity:e.target.value
+                  })
+                }
+                placeholder="Ex.: 1000"
+              />
 
-        <div className="mini-note">
-          O Confeasy calcula automaticamente o custo por unidade base.
-          Ex.: 1 kg por R$ 37,00 = R$ 0,037 por grama.
-        </div>
+            </Field>
 
-        <div className="modal-actions">
-          <button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button>
-          <button className="primary">Salvar ingrediente</button>
-        </div>
-      </form>
-    </Modal>}
+
+            <Field label="Unidade da embalagem">
+
+              <select
+                value={form.package_unit}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    package_unit:e.target.value
+                  })
+                }
+              >
+                <option value="g">
+                  g — gramas
+                </option>
+
+                <option value="kg">
+                  kg — quilos
+                </option>
+
+                <option value="ml">
+                  ml — mililitros
+                </option>
+
+                <option value="l">
+                  L — litros
+                </option>
+
+                <option value="un">
+                  un — unidade
+                </option>
+
+                <option value="pacote">
+                  pacote
+                </option>
+
+                <option value="caixa">
+                  caixa
+                </option>
+
+              </select>
+
+            </Field>
+
+
+            <Field label="Preço da embalagem">
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.package_cost}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    package_cost:e.target.value
+                  })
+                }
+                placeholder="R$ 0,00"
+              />
+
+            </Field>
+
+
+            <Field label="Quantidade em estoque (embalagens)">
+
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.quantity}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    quantity:e.target.value
+                  })
+                }
+                placeholder="Ex.: 2"
+              />
+
+            </Field>
+
+
+            <Field label="Estoque mínimo (embalagens)">
+
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.min_quantity}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    min_quantity:e.target.value
+                  })
+                }
+                placeholder="Ex.: 1"
+              />
+
+            </Field>
+
+          </div>
+
+
+          <div className="mini-note">
+
+            O Confeasy calcula automaticamente o custo
+            por unidade base para suas receitas.
+
+            <br/>
+
+            Ex.: 1 kg por R$ 45,00 =
+            <b> R$ 0,045 por grama.</b>
+
+            <br/>
+
+            O estoque acima representa a quantidade
+            de <b>embalagens</b> que você possui.
+
+          </div>
+
+
+          <div className="modal-actions">
+
+            <button
+              type="button"
+              className="secondary"
+              onClick={()=>setOpen(false)}
+            >
+              Cancelar
+            </button>
+
+            <button className="primary">
+              Salvar ingrediente
+            </button>
+
+          </div>
+
+        </form>
+
+      </Modal>
+
+    )}
+
   </>;
 }
-
 /* =========================================================
    MARKETING
 ========================================================= */
