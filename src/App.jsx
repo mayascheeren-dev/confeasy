@@ -3024,8 +3024,19 @@ prepMinutes
 ========================================================= */
 
 function Orders({session,notify}){
-  const blank={client_name:'',client_phone:'',item_name:'',delivery_date:'',
-    delivery_time:'',value:'',deposit:'',payment_method:'Pix',status:'Pendente',notes:''};
+  const blank={
+    client_name:'',
+    client_phone:'',
+    item_name:'',
+    delivery_date:'',
+    delivery_time:'',
+    value:'',
+    deposit:'',
+    payment_method:'Pix',
+    status:'Pendente',
+    notes:''
+  };
+
   const [rows,setRows]=useState([]);
   const [open,setOpen]=useState(false);
   const [editing,setEditing]=useState(null);
@@ -3033,74 +3044,445 @@ function Orders({session,notify}){
   const [query,setQuery]=useState('');
 
   async function load(){
-    const {data,error}=await supabase.from('orders').select('*').order('delivery_date',{ascending:true});
-    if(error)notify(error.message);else setRows(data||[]);
+    const {data,error}=await supabase
+      .from('orders')
+      .select('*')
+      .order('delivery_date',{ascending:true});
+
+    if(error)notify(error.message);
+    else setRows(data||[]);
   }
+
   useEffect(()=>{load()},[]);
 
-  function openNew(){setEditing(null);setForm(blank);setOpen(true);}
-  function edit(r){setEditing(r);setForm({...blank,...r});setOpen(true);}
-  async function save(e){
-    e.preventDefault();
-    const payload={user_id:session.user.id,client_name:form.client_name.trim(),
-      client_phone:form.client_phone||null,item_name:form.item_name.trim(),
-      delivery_date:form.delivery_date||null,delivery_time:form.delivery_time||null,
-      value:Number(form.value)||0,deposit:Number(form.deposit)||0,
-      payment_method:form.payment_method,status:form.status,notes:form.notes||null};
-    const res=editing?await supabase.from('orders').update(payload).eq('id',editing.id):
-      await supabase.from('orders').insert(payload);
-    if(res.error)notify(res.error.message);
-    else{setOpen(false);notify(editing?'Pedido atualizado.':'Pedido cadastrado.');load();}
-  }
-  async function remove(r){
-    if(!confirm(`Excluir o pedido de ${r.client_name}?`))return;
-    const {error}=await supabase.from('orders').delete().eq('id',r.id);
-    if(error)notify(error.message);else{notify('Pedido excluído.');load();}
+  function openNew(){
+    setEditing(null);
+    setForm(blank);
+    setOpen(true);
   }
 
-  const filtered=rows.filter(r=>!query||
-    `${r.client_name} ${r.item_name}`.toLowerCase().includes(query.toLowerCase()));
+  function edit(r){
+    setEditing(r);
+    setForm({...blank,...r});
+    setOpen(true);
+  }
+
+  async function save(e){
+    e.preventDefault();
+
+    const payload={
+      user_id:session.user.id,
+      client_name:form.client_name.trim(),
+      client_phone:form.client_phone||null,
+      item_name:form.item_name.trim(),
+      delivery_date:form.delivery_date||null,
+      delivery_time:form.delivery_time||null,
+      value:Number(form.value)||0,
+      deposit:Number(form.deposit)||0,
+      payment_method:form.payment_method,
+      status:form.status,
+      notes:form.notes||null
+    };
+
+    const res=editing
+      ? await supabase
+          .from('orders')
+          .update(payload)
+          .eq('id',editing.id)
+      : await supabase
+          .from('orders')
+          .insert(payload);
+
+    if(res.error){
+      notify(res.error.message);
+    }else{
+      setOpen(false);
+      notify(
+        editing
+          ? 'Pedido atualizado.'
+          : 'Pedido cadastrado.'
+      );
+      load();
+    }
+  }
+
+  async function remove(r){
+    if(!confirm(`Excluir o pedido de ${r.client_name}?`))return;
+
+    const {error}=await supabase
+      .from('orders')
+      .delete()
+      .eq('id',r.id);
+
+    if(error){
+      notify(error.message);
+    }else{
+      notify('Pedido excluído.');
+      load();
+    }
+  }
+
+  const filtered=rows.filter(r=>
+    !query ||
+    `${r.client_name} ${r.item_name}`
+      .toLowerCase()
+      .includes(query.toLowerCase())
+  );
 
   return <>
     <div className="page-tools standard-page-tools">
-      <div className="standard-search-wrap"><div className="search-box"><Search size={17}/>
-        <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar cliente ou pedido..."/>
-      </div></div>
-      <div className="standard-actions"><button className="primary" onClick={openNew}><Plus size={17}/> Novo pedido</button></div>
+
+      <div className="standard-search-wrap">
+        <div className="search-box">
+          <Search size={17}/>
+          <input
+            value={query}
+            onChange={e=>setQuery(e.target.value)}
+            placeholder="Buscar cliente ou pedido..."
+          />
+        </div>
+      </div>
+
+      <div className="standard-actions">
+        <button
+          className="primary"
+          onClick={openNew}
+        >
+          <Plus size={17}/>
+          Novo pedido
+        </button>
+      </div>
+
     </div>
+
+
     <section className="panel orders-page-panel">
-      <div className="section-head"><div><h2>Agenda de pedidos</h2><span>{filtered.length} pedidos</span></div></div>
-      {filtered.length?<div className="table-wrap">
-        <table><thead><tr><th>Cliente</th><th>Pedido</th><th>Entrega</th><th>Valor</th><th>Sinal</th><th>Status</th><th/></tr></thead>
-        <tbody>{filtered.map(r=><tr key={r.id}>
-          <td><b>{r.client_name}</b><small className="table-sub">{r.client_phone||'Sem WhatsApp'}</small></td>
-          <td>{r.item_name}</td>
-          <td>{dateBR(r.delivery_date)}{r.delivery_time&&<small className="table-sub">{r.delivery_time}</small>}</td>
-          <td>{money(r.value)}</td><td>{money(r.deposit)}</td>
-          <td><span className={`pill ${['Pago','Entregue'].includes(r.status)?'ok':''}`}>{r.status}</span></td>
-          <td><div className="row-actions"><button className="icon-button" onClick={()=>edit(r)}><Edit3 size={15}/></button>
-            <button className="icon-button danger" onClick={()=>remove(r)}><Trash2 size={15}/></button></div></td>
-        </tr>)}</tbody></table>
-      </div>:<Empty text="Nenhum pedido encontrado." action="Novo pedido" onClick={openNew}/>}
+
+      <div className="section-head">
+        <div>
+          <h2>Agenda de pedidos</h2>
+          <span>{filtered.length} pedidos</span>
+        </div>
+      </div>
+
+
+      {filtered.length ? (
+
+        <div className="table-wrap orders-table-wrap">
+
+          <table className="orders-table">
+
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Pedido</th>
+                <th>Entrega</th>
+                <th>Valor</th>
+                <th>Sinal</th>
+                <th>Status</th>
+                <th/>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {filtered.map(r=>(
+
+                <tr key={r.id}>
+
+                  <td className="order-client-cell">
+                    <b>{r.client_name}</b>
+                    <small className="table-sub">
+                      {r.client_phone||'Sem WhatsApp'}
+                    </small>
+                  </td>
+
+
+                  <td className="order-item-cell">
+                    <strong>{r.item_name}</strong>
+                  </td>
+
+
+                  <td className="order-delivery-cell">
+
+                    <div className="order-date">
+                      <CalendarDays size={14}/>
+                      <span>
+                        {dateBR(r.delivery_date)}
+                      </span>
+                    </div>
+
+                    {r.delivery_time ? (
+
+                      <div className="order-time">
+                        <Clock3 size={18}/>
+                        <strong>{r.delivery_time}</strong>
+                      </div>
+
+                    ) : (
+
+                      <div className="order-time empty">
+                        <Clock3 size={16}/>
+                        <span>Horário não informado</span>
+                      </div>
+
+                    )}
+
+                  </td>
+
+
+                  <td className="order-value-cell">
+                    <strong>{money(r.value)}</strong>
+                  </td>
+
+
+                  <td className="order-deposit-cell">
+                    {money(r.deposit)}
+                  </td>
+
+
+                  <td>
+                    <span
+                      className={`pill ${
+                        ['Pago','Entregue'].includes(r.status)
+                          ? 'ok'
+                          : ''
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </td>
+
+
+                  <td>
+
+                    <div className="row-actions">
+
+                      <button
+                        className="icon-button"
+                        onClick={()=>edit(r)}
+                      >
+                        <Edit3 size={15}/>
+                      </button>
+
+                      <button
+                        className="icon-button danger"
+                        onClick={()=>remove(r)}
+                      >
+                        <Trash2 size={15}/>
+                      </button>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      ) : (
+
+        <Empty
+          text="Nenhum pedido encontrado."
+          action="Novo pedido"
+          onClick={openNew}
+        />
+
+      )}
+
     </section>
 
-    {open&&<Modal open={open} close={()=>setOpen(false)} title={editing?'Editar pedido':'Novo pedido'}>
-      <form className="form" onSubmit={save}>
-        <div className="form-grid two">
-          <Field label="Cliente"><input required value={form.client_name} onChange={e=>setForm({...form,client_name:e.target.value})}/></Field>
-          <Field label="WhatsApp"><input value={form.client_phone} onChange={e=>setForm({...form,client_phone:e.target.value})}/></Field>
-          <Field label="Produto / pedido"><input required value={form.item_name} onChange={e=>setForm({...form,item_name:e.target.value})}/></Field>
-          <Field label="Data de entrega"><input type="date" value={form.delivery_date} onChange={e=>setForm({...form,delivery_date:e.target.value})}/></Field>
-          <Field label="Horário"><input type="time" value={form.delivery_time} onChange={e=>setForm({...form,delivery_time:e.target.value})}/></Field>
-          <Field label="Valor total"><input type="number" step="0.01" value={form.value} onChange={e=>setForm({...form,value:e.target.value})}/></Field>
-          <Field label="Sinal recebido"><input type="number" step="0.01" value={form.deposit} onChange={e=>setForm({...form,deposit:e.target.value})}/></Field>
-          <Field label="Forma de pagamento"><select value={form.payment_method} onChange={e=>setForm({...form,payment_method:e.target.value})}><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>A combinar</option></select></Field>
-          <Field label="Status"><select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{ORDER_STATUS.map(s=><option key={s}>{s}</option>)}</select></Field>
-        </div>
-        <Field label="Observações"><textarea rows="4" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></Field>
-        <div className="modal-actions"><button type="button" className="secondary" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary">Salvar pedido</button></div>
-      </form>
-    </Modal>}
+
+    {open && (
+
+      <Modal
+        open={open}
+        close={()=>setOpen(false)}
+        title={
+          editing
+            ? 'Editar pedido'
+            : 'Novo pedido'
+        }
+      >
+
+        <form
+          className="form"
+          onSubmit={save}
+        >
+
+          <div className="form-grid two">
+
+            <Field label="Cliente">
+              <input
+                required
+                value={form.client_name}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    client_name:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="WhatsApp">
+              <input
+                value={form.client_phone}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    client_phone:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Produto / pedido">
+              <input
+                required
+                value={form.item_name}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    item_name:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Data de entrega">
+              <input
+                type="date"
+                value={form.delivery_date}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    delivery_date:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Horário">
+              <input
+                type="time"
+                value={form.delivery_time}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    delivery_time:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Valor total">
+              <input
+                type="number"
+                step="0.01"
+                value={form.value}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    value:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Sinal recebido">
+              <input
+                type="number"
+                step="0.01"
+                value={form.deposit}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    deposit:e.target.value
+                  })
+                }
+              />
+            </Field>
+
+            <Field label="Forma de pagamento">
+              <select
+                value={form.payment_method}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    payment_method:e.target.value
+                  })
+                }
+              >
+                <option>Pix</option>
+                <option>Dinheiro</option>
+                <option>Cartão</option>
+                <option>Transferência</option>
+                <option>A combinar</option>
+              </select>
+            </Field>
+
+            <Field label="Status">
+              <select
+                value={form.status}
+                onChange={e=>
+                  setForm({
+                    ...form,
+                    status:e.target.value
+                  })
+                }
+              >
+                {ORDER_STATUS.map(s=>
+                  <option key={s}>{s}</option>
+                )}
+              </select>
+            </Field>
+
+          </div>
+
+
+          <Field label="Observações">
+            <textarea
+              rows="4"
+              value={form.notes}
+              onChange={e=>
+                setForm({
+                  ...form,
+                  notes:e.target.value
+                })
+              }
+            />
+          </Field>
+
+
+          <div className="modal-actions">
+
+            <button
+              type="button"
+              className="secondary"
+              onClick={()=>setOpen(false)}
+            >
+              Cancelar
+            </button>
+
+            <button className="primary">
+              Salvar pedido
+            </button>
+
+          </div>
+
+        </form>
+
+      </Modal>
+
+    )}
+
   </>;
 }
 
