@@ -3134,3 +3134,148 @@ tbody tr:hover td {
   }
 
 }
+
+/* =========================================================
+   PEDIDOS — AGENDA VISUAL
+========================================================= */
+
+.orders-table-wrap{
+  overflow-x:auto;
+}
+
+.orders-table{
+  min-width:900px;
+}
+
+.orders-table th{
+  padding-top:12px;
+  padding-bottom:12px;
+}
+
+.orders-table td{
+  padding-top:18px;
+  padding-bottom:18px;
+  vertical-align:middle;
+}
+
+
+/* CLIENTE */
+
+.order-client-cell{
+  min-width:150px;
+}
+
+.order-client-cell b{
+  display:block;
+  color:#fff;
+  font-size:13px;
+  font-weight:750;
+  margin-bottom:5px;
+}
+
+
+/* PEDIDO */
+
+.order-item-cell{
+  min-width:180px;
+}
+
+.order-item-cell strong{
+  color:#e9ecec;
+  font-size:13px;
+  font-weight:650;
+}
+
+
+/* ENTREGA */
+
+.order-delivery-cell{
+  min-width:155px;
+}
+
+.order-date{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:6px;
+  color:#858b8b;
+  font-size:11px;
+  font-weight:600;
+}
+
+.order-date svg{
+  color:#777d7d;
+}
+
+
+.order-time{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--lime);
+}
+
+.order-time strong{
+  font-size:20px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:-.04em;
+}
+
+.order-time svg{
+  stroke-width:2.4;
+}
+
+
+.order-time.empty{
+  color:#666d6d;
+}
+
+.order-time.empty strong,
+.order-time.empty span{
+  font-size:10px;
+  font-weight:500;
+}
+
+
+/* VALOR */
+
+.order-value-cell strong{
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+
+/* SINAL */
+
+.order-deposit-cell{
+  color:#9b9f9f;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+
+/* HOVER */
+
+.orders-table tbody tr{
+  transition:
+    background .18s ease,
+    transform .18s ease;
+}
+
+.orders-table tbody tr:hover{
+  background:rgba(215,255,17,.025);
+}
+
+
+/* MOBILE */
+
+@media (max-width:900px){
+
+  .orders-table{
+    min-width:850px;
+  }
+
+}
