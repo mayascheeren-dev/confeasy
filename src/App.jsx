@@ -273,7 +273,13 @@ function AppShell({session,profile,setProfile,page,setPage,onLogout,notify,toast
         )}
       </nav>
       <div className="sidebar-user">
-        <div className="avatar">{(profile.full_name||session.user.email||'C')[0].toUpperCase()}</div>
+        <div className="avatar">
+  {profile.logo_url ? (
+    <img src={profile.logo_url} alt="Logo" />
+  ) : (
+    (profile.full_name||session.user.email||'C')[0].toUpperCase()
+  )}
+</div>
         <div><b>{profile.business_name||'Minha Confeitaria'}</b><small>{session.user.email}</small></div>
       </div>
       <button className="logout" onClick={onLogout}><LogOut size={16}/> Sair</button>
@@ -288,7 +294,13 @@ function AppShell({session,profile,setProfile,page,setPage,onLogout,notify,toast
         </div>
         <div className="top-actions">
           <button className="icon-button"><Bell size={18}/></button>
-          <button className="avatar top-avatar">{(profile.full_name||session.user.email||'C')[0].toUpperCase()}</button>
+          <button className="avatar top-avatar">
+  {profile.logo_url ? (
+    <img src={profile.logo_url} alt="Logo" />
+  ) : (
+    (profile.full_name||session.user.email||'C')[0].toUpperCase()
+  )}
+</button>
           <button className="icon-button mobile-menu" onClick={()=>setMobile(v=>!v)}><Menu size={18}/></button>
         </div>
       </header>
@@ -4537,39 +4549,249 @@ Não invente informações sobre o negócio que não foram fornecidas.`
 
 function Business({profile,setProfile,session,notify}){
   const [form,setForm]=useState(profile);
-  useEffect(()=>setForm(profile),[profile]);
+  const [uploadingLogo,setUploadingLogo]=useState(false);
+
+  useEffect(()=>{
+    setForm(profile);
+  },[profile]);
+
+  async function uploadLogo(e){
+    const file=e.target.files?.[0];
+    if(!file)return;
+
+    const allowed=['image/png','image/jpeg','image/webp'];
+
+    if(!allowed.includes(file.type)){
+      notify('Escolha uma imagem PNG, JPG ou WEBP.');
+      return;
+    }
+
+    if(file.size>5*1024*1024){
+      notify('A logo deve ter no máximo 5 MB.');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try{
+      const path=`${session.user.id}/logo`;
+
+      const {error:uploadError}=await supabase
+        .storage
+        .from('business-assets')
+        .upload(path,file,{
+          upsert:true,
+          contentType:file.type,
+          cacheControl:'3600'
+        });
+
+      if(uploadError)throw uploadError;
+
+      const {data:urlData}=supabase
+        .storage
+        .from('business-assets')
+        .getPublicUrl(path);
+
+      const logoUrl=`${urlData.publicUrl}?v=${Date.now()}`;
+
+      const {data,error}=await supabase
+        .from('profiles')
+        .update({logo_url:logoUrl})
+        .eq('id',session.user.id)
+        .select()
+        .single();
+
+      if(error)throw error;
+
+      setForm(prev=>({...prev,logo_url:logoUrl}));
+      setProfile({...profile,...data});
+
+      notify('Logo da sua confeitaria atualizada.');
+    }catch(error){
+      notify(error.message||'Não foi possível carregar a logo.');
+    }finally{
+      setUploadingLogo(false);
+    }
+  }
 
   async function save(e){
     e.preventDefault();
+
     const payload={
       full_name:form.full_name||'',
       business_name:form.business_name||'Minha Confeitaria',
-      phone:form.phone||null,instagram:form.instagram||null,
-      city:form.city||null,address:form.address||null,logo_url:form.logo_url||null
+      phone:form.phone||null,
+      instagram:form.instagram||null,
+      city:form.city||null,
+      address:form.address||null,
+      logo_url:form.logo_url||null
     };
-    const {data,error}=await supabase.from('profiles').update(payload)
-      .eq('id',session.user.id).select().single();
+
+    const {data,error}=await supabase
+      .from('profiles')
+      .update(payload)
+      .eq('id',session.user.id)
+      .select()
+      .single();
+
     if(error)notify(error.message);
-    else{setProfile({...profile,...data});notify('Dados do negócio atualizados.');}
+    else{
+      setProfile({...profile,...data});
+      notify('Dados do negócio atualizados.');
+    }
   }
 
   return <section className="panel business-panel">
-    <div className="section-head"><div><h2>Meu negócio</h2><span>Essas informações ficam vinculadas à sua conta.</span></div><Settings size={19}/></div>
+
+    <div className="section-head">
+      <div>
+        <h2>Meu negócio</h2>
+        <span>
+          Essas informações ficam vinculadas à sua conta.
+        </span>
+      </div>
+
+      <Settings size={19}/>
+    </div>
+
     <form className="form" onSubmit={save}>
+
+      <div className="business-logo-area">
+
+        <div className="business-logo-preview">
+
+          {form.logo_url ? (
+            <img
+              src={form.logo_url}
+              alt="Logo da confeitaria"
+            />
+          ) : (
+            <span>
+              {(form.business_name||form.full_name||'C')[0].toUpperCase()}
+            </span>
+          )}
+
+        </div>
+
+        <div className="business-logo-content">
+
+          <strong>Logo da sua confeitaria</strong>
+
+          <span>
+            Use sua logo para deixar o Confeasy com a identidade do seu negócio.
+          </span>
+
+          <label className="secondary business-logo-button">
+
+            <ImagePlus size={16}/>
+
+            {uploadingLogo
+              ? 'Carregando logo...'
+              : 'Carregar logo'
+            }
+
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={uploadLogo}
+              disabled={uploadingLogo}
+              hidden
+            />
+
+          </label>
+
+          <small>
+            PNG, JPG ou WEBP · até 5 MB
+          </small>
+
+        </div>
+
+      </div>
+
+
       <div className="form-grid two">
-        <Field label="Confeiteira"><input value={form.full_name||''} onChange={e=>setForm({...form,full_name:e.target.value})} placeholder="Seu nome"/></Field>
-        <Field label="Nome do negócio"><input value={form.business_name||''} onChange={e=>setForm({...form,business_name:e.target.value})}/></Field>
-        <Field label="WhatsApp"><input value={form.phone||''} onChange={e=>setForm({...form,phone:e.target.value})}/></Field>
-        <Field label="Instagram"><input value={form.instagram||''} onChange={e=>setForm({...form,instagram:e.target.value})} placeholder="@suaempresa"/></Field>
-        <Field label="Cidade"><input value={form.city||''} onChange={e=>setForm({...form,city:e.target.value})}/></Field>
-        <Field label="Endereço"><input value={form.address||''} onChange={e=>setForm({...form,address:e.target.value})}/></Field>
+
+        <Field label="Confeiteira">
+          <input
+            value={form.full_name||''}
+            onChange={e=>
+              setForm({...form,full_name:e.target.value})
+            }
+            placeholder="Seu nome"
+          />
+        </Field>
+
+        <Field label="Nome do negócio">
+          <input
+            value={form.business_name||''}
+            onChange={e=>
+              setForm({...form,business_name:e.target.value})
+            }
+          />
+        </Field>
+
+        <Field label="WhatsApp">
+          <input
+            value={form.phone||''}
+            onChange={e=>
+              setForm({...form,phone:e.target.value})
+            }
+          />
+        </Field>
+
+        <Field label="Instagram">
+          <input
+            value={form.instagram||''}
+            onChange={e=>
+              setForm({...form,instagram:e.target.value})
+            }
+            placeholder="@suaempresa"
+          />
+        </Field>
+
+        <Field label="Cidade">
+          <input
+            value={form.city||''}
+            onChange={e=>
+              setForm({...form,city:e.target.value})
+            }
+          />
+        </Field>
+
+        <Field label="Endereço">
+          <input
+            value={form.address||''}
+            onChange={e=>
+              setForm({...form,address:e.target.value})
+            }
+          />
+        </Field>
+
       </div>
+
+
       <div className="account-info">
-        <div><span>E-mail</span><b>{session.user.email}</b></div>
-        <div><span>Acesso até</span><b>{dateBR(profile.expires_at)}</b></div>
+
+        <div>
+          <span>E-mail</span>
+          <b>{session.user.email}</b>
+        </div>
+
+        <div>
+          <span>Acesso até</span>
+          <b>{dateBR(profile.expires_at)}</b>
+        </div>
+
       </div>
-      <button className="primary"><CheckCircle2 size={16}/> Salvar alterações</button>
+
+
+      <button className="primary">
+        <CheckCircle2 size={16}/>
+        Salvar alterações
+      </button>
+
     </form>
+
   </section>;
 }
 
