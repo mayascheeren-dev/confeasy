@@ -492,7 +492,7 @@ function Dashboard({profile,setPage}){
 
                   <strong>
                     <Clock3 size={17}/>
-                    {o.delivery_time}
+                    {o.delivery_time?.slice(0,5)}
                   </strong>
 
                 ) : (
