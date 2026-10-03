@@ -3532,3 +3532,53 @@ tbody tr:hover td {
   }
 
 }
+
+/* =========================================================
+   DASHBOARD — RESUMO FINANCEIRO
+========================================================= */
+
+.dashboard-summary + .stats{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+.dashboard-summary + .stats .stat{
+  min-height:78px;
+  padding:15px 18px;
+  border-radius:14px;
+  background:#101313;
+}
+
+.dashboard-summary + .stats .stat span{
+  font-size:10px;
+}
+
+.dashboard-summary + .stats .stat b{
+  font-size:19px;
+}
+
+
+/* MOBILE */
+
+@media (max-width:760px){
+
+  .dashboard-summary + .stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .dashboard-summary + .stats .stat:last-child{
+    grid-column:1 / -1;
+  }
+
+}
+
+@media (max-width:420px){
+
+  .dashboard-summary + .stats{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-summary + .stats .stat:last-child{
+    grid-column:auto;
+  }
+
+}
