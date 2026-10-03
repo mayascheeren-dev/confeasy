@@ -2742,3 +2742,395 @@ tbody tr:hover td {
 @media(max-width:900px){.lp-nav-links{display:none}.lp-container{width:min(100% - 28px,680px)}.lp-hero{padding:65px 0 60px}.lp-hero-grid{grid-template-columns:1fr;gap:38px;text-align:center}.lp-hero-copy>p{margin:0 auto}.lp-actions,.lp-proof{justify-content:center}.lp-device-stage{min-height:430px}.lp-laptop{width:92%}.lp-phone{right:0;bottom:0;width:135px}.lp-strip-inner{grid-template-columns:repeat(3,1fr)}.lp-strip-inner>div:nth-child(n+4){border-top:1px solid var(--lp-line)}.lp-features{grid-template-columns:repeat(2,1fr)}.lp-showcase-grid{grid-template-columns:1fr;gap:40px}.lp-showcase-copy{text-align:center}.lp-showcase-copy p{margin:0 auto}.lp-checks{max-width:440px;margin:25px auto 0;text-align:left}.lp-benefit-card{grid-template-columns:1fr;padding:40px 28px;text-align:center}.lp-benefit-card p{margin:0 auto}.lp-benefit-list{max-width:390px;margin:25px auto;text-align:left}.lp-steps{grid-template-columns:1fr}.lp-plans{grid-template-columns:1fr;max-width:470px;margin:0 auto}.lp-plan.featured{transform:none}.lp-final-plans{flex-direction:column;max-width:430px;margin:0 auto}.lp-final-plans .lp-btn{width:100%}.lp-footer-inner{flex-direction:column;text-align:center}.lp-mobile-cta{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:60;background:rgba(12,14,15,.94);backdrop-filter:blur(15px);border:1px solid rgba(215,255,17,.2);border-radius:14px;padding:7px;box-shadow:0 15px 40px rgba(0,0,0,.5)}.lp-mobile-cta a{flex:1;text-align:center;background:var(--lp-lime);color:#08090a;border-radius:9px;padding:12px;font-size:11px;font-weight:900}}
 @media(max-width:560px){.lp-hero h1{font-size:50px;letter-spacing:-3.5px}.lp-hero-copy>p{font-size:15px}.lp-device-stage{min-height:325px}.lp-laptop{width:100%}.lp-laptop-screen{border-width:5px;padding:6px}.lp-app-window{grid-template-columns:62px 1fr}.lp-sidebar{padding:8px 5px}.lp-side-logo{font-size:9px;margin-bottom:11px}.lp-side-item{font-size:5px;height:20px;padding:0 4px}.lp-app-main{padding:9px}.lp-app-head strong{font-size:10px}.lp-app-cards{gap:4px}.lp-app-cards>div{padding:5px}.lp-app-cards small{font-size:5px}.lp-app-cards b{font-size:8px}.lp-app-chart{height:65px}.lp-laptop-base{height:9px}.lp-phone{width:102px;border-width:5px;border-radius:20px;padding:3px}.lp-phone-screen{min-height:210px;border-radius:14px;padding:8px 6px}.lp-phone-logo{font-size:8px;margin-bottom:9px}.lp-phone-card{padding:5px;margin-bottom:4px}.lp-phone-card small{font-size:4px}.lp-phone-card b{font-size:7px}.lp-strip-inner>div{font-size:8px;padding:12px 5px}.lp-section,.lp-showcase,.lp-benefit,.lp-pricing{padding:75px 0}.lp-screen-wall{grid-template-columns:1fr;transform:none}.lp-mini-screen{min-height:220px}.lp-screen-wall .lp-mini-screen:nth-child(n+3){display:none}.lp-benefit-card{padding:34px 20px}.lp-floating-phone{width:190px}.lp-floating-phone .lp-phone-screen{min-height:360px}.lp-price{font-size:39px}.lp-plan{min-height:0}.lp-final{padding:75px 0 105px}.lp-nav{height:68px}.lp-logo{font-size:23px}}
 
+/* =========================================================
+   YSA — CHAT MODERNO
+========================================================= */
+
+.marketing-yssa{
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
+}
+
+
+/* =========================
+   CABEÇALHO DA YSA
+========================= */
+
+.marketing-yssa-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:18px;
+  padding:20px 22px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 0% 50%,rgba(215,255,17,.08),transparent 30%),
+    linear-gradient(135deg,#111414,#0b0d0d);
+  box-shadow:0 12px 35px rgba(0,0,0,.22);
+}
+
+.marketing-yssa-identity{
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.marketing-yssa-avatar{
+  width:54px;
+  height:54px;
+  flex:0 0 54px;
+  display:grid;
+  place-items:center;
+  border-radius:17px;
+  background:var(--lime);
+  color:#101310;
+  box-shadow:0 0 0 5px rgba(215,255,17,.08);
+}
+
+.marketing-yssa-identity .eyebrow{
+  display:block;
+  margin-bottom:3px;
+  color:var(--lime);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.16em;
+}
+
+.marketing-yssa-identity h2{
+  margin:0;
+  color:#fff;
+  font-size:25px;
+  line-height:1;
+  letter-spacing:-.04em;
+}
+
+.marketing-yssa-identity p{
+  margin:5px 0 0;
+  color:#9b9f9f;
+  font-size:12px;
+}
+
+
+/* =========================
+   BOTÃO CHATGPT
+========================= */
+
+.marketing-yssa-chatgpt{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-height:44px;
+  padding:0 16px;
+  border:1px solid rgba(215,255,17,.22);
+  border-radius:12px;
+  background:rgba(215,255,17,.06);
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  text-decoration:none;
+  transition:.2s ease;
+}
+
+.marketing-yssa-chatgpt svg:last-child{
+  transition:transform .2s ease;
+}
+
+.marketing-yssa-chatgpt:hover{
+  background:var(--lime);
+  border-color:var(--lime);
+  color:#101310;
+  transform:translateY(-1px);
+}
+
+.marketing-yssa-chatgpt:hover svg:last-child{
+  transform:translateX(3px);
+}
+
+
+/* =========================================================
+   JANELA DE CONVERSA
+========================================================= */
+
+.marketing-yssa-chat{
+  position:relative;
+  overflow:hidden;
+  padding:0 !important;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:22px !important;
+  background:#0d1010 !important;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.30),
+    0 0 0 1px rgba(255,255,255,.015);
+}
+
+
+/* =========================
+   CABEÇALHO DA CONVERSA
+========================= */
+
+.marketing-yssa-chat-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:76px;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:
+    linear-gradient(90deg,#151919,#101313);
+}
+
+.marketing-yssa-small-avatar{
+  width:43px;
+  height:43px;
+  flex:0 0 43px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--lime);
+  color:#101310;
+  box-shadow:0 0 0 4px rgba(215,255,17,.07);
+}
+
+.marketing-yssa-chat-head > div:nth-child(2){
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.marketing-yssa-chat-head strong{
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+
+.marketing-yssa-chat-head span{
+  color:#858b8b;
+  font-size:11px;
+}
+
+.marketing-yssa-chat-head .marketing-ai-status{
+  margin-left:auto;
+  padding:7px 11px;
+  font-size:10px;
+  border-color:rgba(215,255,17,.15);
+  background:rgba(215,255,17,.035);
+}
+
+
+/* =========================
+   ÁREA DAS MENSAGENS
+   visual de conversa
+========================= */
+
+.marketing-yssa .marketing-ai-messages,
+.marketing-yssa-messages{
+  min-height:460px;
+  max-height:560px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  padding:28px 30px;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(215,255,17,.025),transparent 25%),
+    radial-gradient(circle at 85% 80%,rgba(215,255,17,.018),transparent 25%),
+    #0b0e0e;
+}
+
+
+/* pequeno padrão de fundo */
+.marketing-yssa .marketing-ai-messages::before,
+.marketing-yssa-messages::before{
+  content:"";
+  position:absolute;
+  inset:76px 0 82px;
+  pointer-events:none;
+  opacity:.35;
+  background-image:
+    radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+
+
+/* =========================
+   BALÕES
+========================= */
+
+.marketing-yssa .marketing-ai-message,
+.marketing-yssa-messages .marketing-ai-message{
+  position:relative;
+  z-index:1;
+  max-width:72%;
+  padding:14px 17px;
+  border-radius:17px;
+  font-size:14px;
+  line-height:1.65;
+  letter-spacing:-.005em;
+}
+
+.marketing-yssa .marketing-ai-message.ai,
+.marketing-yssa-messages .marketing-ai-message.ai{
+  align-self:flex-start;
+  padding-left:46px;
+  color:#f1f3f3;
+  background:#181c1c;
+  border:1px solid rgba(255,255,255,.06);
+  border-top-left-radius:5px;
+  box-shadow:0 5px 18px rgba(0,0,0,.12);
+}
+
+.marketing-yssa .marketing-ai-message.user,
+.marketing-yssa-messages .marketing-ai-message.user{
+  align-self:flex-end;
+  color:#111411;
+  background:var(--lime);
+  border:0;
+  border-top-right-radius:5px;
+  font-weight:600;
+  box-shadow:0 5px 18px rgba(0,0,0,.15);
+}
+
+.marketing-yssa .marketing-ai-message-icon,
+.marketing-yssa-messages .marketing-ai-message-icon{
+  left:13px;
+  top:13px;
+  width:25px;
+  height:25px;
+  border:0;
+  border-radius:50%;
+  background:var(--lime);
+  color:#101310;
+}
+
+
+/* =========================
+   CAMPO DE DIGITAÇÃO
+========================= */
+
+.marketing-yssa-input{
+  position:relative;
+  z-index:3;
+  padding:14px 18px 18px;
+  border-top:1px solid rgba(255,255,255,.07);
+  background:#111414;
+}
+
+.marketing-yssa-input form{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:7px 7px 7px 18px;
+  border:1px solid #303535;
+  border-radius:17px;
+  background:#080a0a;
+  transition:.2s ease;
+}
+
+.marketing-yssa-input form:focus-within{
+  border-color:rgba(215,255,17,.55);
+  box-shadow:0 0 0 3px rgba(215,255,17,.07);
+}
+
+.marketing-yssa-input input{
+  flex:1;
+  min-width:0;
+  height:48px;
+  padding:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fff;
+  font-family:inherit;
+  font-size:15px;
+}
+
+.marketing-yssa-input input::placeholder{
+  color:#666d6d;
+}
+
+.marketing-yssa-input .marketing-ai-send{
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:13px;
+  background:var(--lime);
+  color:#101310;
+  cursor:pointer;
+  transition:.2s ease;
+}
+
+.marketing-yssa-input .marketing-ai-send:hover{
+  transform:scale(1.04);
+  box-shadow:0 5px 18px rgba(215,255,17,.18);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:760px){
+
+  .marketing-yssa{
+    max-width:none;
+  }
+
+  .marketing-yssa-header{
+    align-items:flex-start;
+    flex-direction:column;
+    padding:17px;
+  }
+
+  .marketing-yssa-chatgpt{
+    width:100%;
+    justify-content:center;
+  }
+
+  .marketing-yssa-avatar{
+    width:48px;
+    height:48px;
+    flex-basis:48px;
+  }
+
+  .marketing-yssa-identity h2{
+    font-size:23px;
+  }
+
+  .marketing-yssa-chat-head{
+    padding:12px 15px;
+  }
+
+  .marketing-yssa-chat-head .marketing-ai-status{
+    display:none;
+  }
+
+  .marketing-yssa .marketing-ai-messages,
+  .marketing-yssa-messages{
+    min-height:400px;
+    max-height:500px;
+    padding:20px 15px;
+  }
+
+  .marketing-yssa .marketing-ai-message,
+  .marketing-yssa-messages .marketing-ai-message{
+    max-width:88%;
+    font-size:13px;
+  }
+
+  .marketing-yssa-input{
+    padding:10px;
+  }
+
+  .marketing-yssa-input input{
+    font-size:14px;
+  }
+
+}
