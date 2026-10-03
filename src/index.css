@@ -3279,3 +3279,256 @@ tbody tr:hover td {
   }
 
 }
+
+/* =========================================================
+   DASHBOARD — NOVA ORGANIZAÇÃO
+========================================================= */
+
+.dashboard-orders{
+  margin-top:14px;
+  padding:22px;
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(215,255,17,.045),
+      transparent 28%
+    ),
+    var(--panel);
+}
+
+
+/* =========================
+   LISTA DE PEDIDOS
+========================= */
+
+.dashboard-orders-list{
+  display:grid;
+  gap:8px;
+}
+
+
+.dashboard-order-card{
+  display:grid;
+  grid-template-columns:155px minmax(180px,1fr) auto 34px;
+  align-items:center;
+  gap:18px;
+  min-height:76px;
+  padding:13px 15px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:14px;
+  background:#101313;
+  transition:.18s ease;
+}
+
+
+.dashboard-order-card:hover{
+  border-color:rgba(215,255,17,.18);
+  background:#131717;
+  transform:translateY(-1px);
+}
+
+
+/* DATA + HORÁRIO */
+
+.dashboard-order-date{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+
+.dashboard-order-date > span{
+  color:#7d8383;
+  font-size:10px;
+  font-weight:650;
+}
+
+
+.dashboard-order-date strong{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--lime);
+  font-size:20px;
+  line-height:1;
+  letter-spacing:-.04em;
+}
+
+
+.dashboard-order-date strong svg{
+  stroke-width:2.5;
+}
+
+
+.dashboard-order-date small{
+  color:#626969;
+  font-size:10px;
+}
+
+
+/* CLIENTE + PEDIDO */
+
+.dashboard-order-info{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+
+.dashboard-order-info strong{
+  overflow:hidden;
+  color:#fff;
+  font-size:13px;
+  font-weight:750;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+
+.dashboard-order-info span{
+  overflow:hidden;
+  color:#8b9090;
+  font-size:11px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+
+/* VALOR */
+
+.dashboard-order-value{
+  display:flex;
+  align-items:flex-end;
+  flex-direction:column;
+  gap:6px;
+}
+
+
+.dashboard-order-value strong{
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+
+/* SETA */
+
+.dashboard-order-arrow{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;
+  background:#171b1b;
+  color:#777d7d;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+
+.dashboard-order-arrow:hover{
+  color:var(--lime);
+  border-color:rgba(215,255,17,.22);
+}
+
+
+/* =========================
+   RESUMO
+========================= */
+
+.dashboard-summary{
+  margin-top:26px;
+}
+
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+
+/* =========================
+   INDICADORES
+========================= */
+
+.dashboard-summary + .stats{
+  margin-top:14px;
+}
+
+
+/* =========================
+   PLANO
+========================= */
+
+.dashboard-plan{
+  margin-top:14px;
+}
+
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width:1050px){
+
+  .dashboard-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .dashboard-order-card{
+    grid-template-columns:140px minmax(150px,1fr) auto 34px;
+    gap:12px;
+  }
+
+}
+
+
+@media (max-width:760px){
+
+  .dashboard-order-card{
+    grid-template-columns:1fr auto;
+    gap:12px;
+  }
+
+  .dashboard-order-date{
+    grid-column:1;
+    grid-row:1;
+  }
+
+  .dashboard-order-info{
+    grid-column:1;
+    grid-row:2;
+  }
+
+  .dashboard-order-value{
+    grid-column:2;
+    grid-row:1 / span 2;
+  }
+
+  .dashboard-order-arrow{
+    display:none;
+  }
+
+}
+
+
+@media (max-width:520px){
+
+  .dashboard-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .dashboard-order-card{
+    padding:13px;
+  }
+
+  .dashboard-order-date strong{
+    font-size:18px;
+  }
+
+}
