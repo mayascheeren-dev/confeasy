@@ -6,7 +6,16 @@ export default async function handler(req, res) {
       error: "Método não permitido.",
     });
   }
+const adminSecret = process.env.CONFEASY_ADMIN_SECRET;
 
+if (
+  !adminSecret ||
+  req.headers["x-confeasy-admin-secret"] !== adminSecret
+) {
+  return res.status(401).json({
+    error: "Não autorizado.",
+  });
+}
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
