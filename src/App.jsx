@@ -55,9 +55,9 @@ function convertToBase(quantity,unit){
 
 function LandingPage(){
   const plans = [
-    {days:'30 DIAS',price:'R$ 19,90',description:'Comece a organizar sua confeitaria agora.',cta:'COMEÇAR POR R$ 19,90',link:'https://www.asaas.com/000/c/tqgg1c884dx1h4j1'},
-    {days:'90 DIAS',price:'R$ 44,90',description:'Mais tempo para colocar sua rotina em ordem.',cta:'QUERO 90 DIAS',link:'https://www.asaas.com/000/c/spq8l5cw7qblvjes',featured:true},
-    {days:'365 DIAS',price:'R$ 97,00',description:'Um ano inteiro para cuidar melhor do seu negócio.',cta:'QUERO 1 ANO',link:'https://www.asaas.com/000/c/ggrrovd9q8ozwprr'}
+    {days:'30 DIAS',price:'R$ 19,90',description:'Comece a organizar sua confeitaria agora.',cta:'COMEÇAR POR R$ 19,90',link:'https://pay.hotmart.com/T107878666M?off=dtsqaani'},
+    {days:'90 DIAS',price:'R$ 44,90',description:'Mais tempo para colocar sua rotina em ordem.',cta:'QUERO 90 DIAS',link:'https://pay.hotmart.com/T107878666M?off=9pjzt4g3',featured:true},
+    {days:'365 DIAS',price:'R$ 97,00',description:'Um ano inteiro para cuidar melhor do seu negócio.',cta:'QUERO 1 ANO',link:'https://pay.hotmart.com/T107878666M?off=y675oqj9'}
   ];
 
   const features = [
