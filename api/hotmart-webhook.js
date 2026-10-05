@@ -237,6 +237,52 @@ export default async function handler(req, res) {
           "Falha ao criar o acesso."
       );
     }
+        /*
+     * Envia os dados de acesso por e-mail
+     * somente quando uma nova conta foi criada.
+     */
+    if (provisionResult.created && provisionResult.password) {
+      try {
+        const emailResponse = await fetch(
+          "https://confeasy.vercel.app/api/send-access-email",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+              "x-confeasy-admin-secret":
+                adminSecret,
+            },
+
+            body: JSON.stringify({
+              email,
+              full_name: fullName,
+              password:
+                provisionResult.password,
+              expires_at:
+                provisionResult.expires_at,
+            }),
+          }
+        );
+
+        const emailResult =
+          await emailResponse.json().catch(
+            () => ({})
+          );
+
+        if (!emailResponse.ok) {
+          console.error(
+            "Confeasy access email error:",
+            emailResult
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "Confeasy access email exception:",
+          emailError
+        );
+      }
+    }
     const priceValue = Number(
       purchase.price?.value
     );
