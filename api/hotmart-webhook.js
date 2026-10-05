@@ -237,7 +237,83 @@ export default async function handler(req, res) {
           "Falha ao criar o acesso."
       );
     }
+    const priceValue = Number(
+      purchase.price?.value
+    );
 
+    const currency =
+      normalize(
+        purchase.price?.currency_value
+      ) || "BRL";
+
+    const purchaseDate =
+      purchase.order_date
+        ? new Date(
+            Number(purchase.order_date)
+          ).toISOString()
+        : null;
+
+    const approvedAt =
+      purchase.approved_date
+        ? new Date(
+            Number(purchase.approved_date)
+          ).toISOString()
+        : new Date().toISOString();
+
+    const { error: saleError } =
+      await supabase
+        .from("hotmart_sales")
+        .upsert(
+          {
+            transaction_id:
+              transactionId,
+            event_id:
+              eventId,
+            event_type:
+              eventType,
+            product_id:
+              productId,
+            product_name:
+              normalize(product.name),
+            offer_code:
+              normalize(
+                purchase.offer?.code
+              ),
+            offer_name:
+              offerName,
+            buyer_email:
+              email,
+            buyer_name:
+              fullName,
+            amount:
+              Number.isFinite(priceValue)
+                ? priceValue
+                : null,
+            currency,
+            days,
+            status: "approved",
+            user_id:
+              provisionResult.user_id ||
+              null,
+            expires_at:
+              provisionResult.expires_at ||
+              null,
+            purchase_date:
+              purchaseDate,
+            approved_at:
+              approvedAt,
+            updated_at:
+              new Date().toISOString(),
+          },
+          {
+            onConflict:
+              "transaction_id",
+          }
+        );
+
+    if (saleError) {
+      throw saleError;
+    }
     console.log(
       "Hotmart purchase processed:",
       {
