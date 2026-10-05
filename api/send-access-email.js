@@ -59,7 +59,7 @@ export default async function handler(req, res) {
           </p>
 
           <p style="margin: 0 0 10px;">
-            <strong>Senha:</strong> ${password || "A senha será enviada separadamente."}
+            <strong>Senha:</strong> ${password || "Use sua senha atual para acessar o Confeasy."}
           </p>
 
           <p style="margin: 0;">
